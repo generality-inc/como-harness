@@ -1,0 +1,27 @@
+# Bytecode
+__pycache__/
+*.py[cod]
+
+# Build / dist
+build/
+dist/
+*.egg-info/
+
+# Virtualenvs
+.venv/
+.venv.*/
+
+# Tool caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store

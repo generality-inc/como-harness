@@ -1,0 +1,32 @@
+{
+  "base_url": "https://api.como.sh",
+  "version": "v1",
+  "endpoints": [
+    {"resource": "profile", "action": "get", "method": "GET", "como_path": "/v1/ghost/profile", "file": "profile__get.json"},
+    {"resource": "profile", "action": "search", "method": "GET", "como_path": "/v1/ghost/profile-search", "file": "profile__search.json"},
+    {"resource": "profile", "action": "posts", "method": "GET", "como_path": "/v1/ghost/profile-posts", "file": "profile__posts.json"},
+    {"resource": "profile", "action": "comments", "method": "GET", "como_path": "/v1/ghost/profile-comments", "file": "profile__comments.json"},
+    {"resource": "profile", "action": "reactions", "method": "GET", "como_path": "/v1/ghost/profile-reactions", "file": "profile__reactions.json"},
+    {"resource": "leads", "action": "search", "method": "GET", "como_path": "/v1/ghost/lead-search", "file": "leads__search.json"},
+    {"resource": "company", "action": "get", "method": "GET", "como_path": "/v1/ghost/company", "file": "company__get.json"},
+    {"resource": "company", "action": "search", "method": "GET", "como_path": "/v1/ghost/company-search", "file": "company__search.json"},
+    {"resource": "company", "action": "posts", "method": "GET", "como_path": "/v1/ghost/company-posts", "file": "company__posts.json"},
+    {"resource": "post", "action": "search", "method": "GET", "como_path": "/v1/ghost/post-search", "file": "post__search.json"},
+    {"resource": "post", "action": "get", "method": "GET", "como_path": "/v1/ghost/post", "file": "post__get.json"},
+    {"resource": "post", "action": "company_posts", "method": "GET", "como_path": "/v1/ghost/company-posts", "file": "post__company_posts.json"},
+    {"resource": "post", "action": "user_posts", "method": "GET", "como_path": "/v1/ghost/profile-posts", "file": "post__user_posts.json"},
+    {"resource": "post", "action": "comments", "method": "GET", "como_path": "/v1/ghost/post-comments", "file": "post__comments.json"},
+    {"resource": "post", "action": "reactions", "method": "GET", "como_path": "/v1/ghost/post-reactions", "file": "post__reactions.json"},
+    {"resource": "post", "action": "group_posts", "method": "GET", "como_path": "/v1/ghost/post-search", "file": "post__group_posts.json"},
+    {"resource": "post", "action": "comment_replies", "method": "GET", "como_path": "/v1/ghost/post-comment-replies", "file": "post__comment_replies.json"},
+    {"resource": "post", "action": "comment_reactions", "method": "GET", "como_path": "/v1/ghost/comment-reactions", "file": "post__comment_reactions.json"},
+    {"resource": "job", "action": "get", "method": "GET", "como_path": "/v1/ghost/job", "file": "job__get.json"},
+    {"resource": "job", "action": "search", "method": "GET", "como_path": "/v1/ghost/job-search", "file": "job__search.json"},
+    {"resource": "group", "action": "get", "method": "GET", "como_path": "/v1/ghost/group", "file": "group__get.json"},
+    {"resource": "group", "action": "search", "method": "GET", "como_path": "/v1/ghost/group-search", "file": "group__search.json"},
+    {"resource": "ads", "action": "search", "method": "GET", "como_path": "/v1/ghost/ad-search", "file": "ads__search.json"},
+    {"resource": "ads", "action": "get", "method": "GET", "como_path": "/v1/ghost/ad", "file": "ads__get.json"},
+    {"resource": "service", "action": "search", "method": "GET", "como_path": "/v1/ghost/service-search", "file": "service__search.json"},
+    {"resource": "geo", "action": "search", "method": "GET", "como_path": "/v1/ghost/geo-id-search", "file": "geo__search.json"}
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "resource": "service",
+  "action": "search",
+  "method": "GET",
+  "upstream_path": "/linkedin/service-search",
+  "como_path": "/v1/ghost/service-search",
+  "summary": "Search service-provider profiles by keywords and geographic location.",
+  "query_params": [
+    {"name": "search", "type": "string", "required": true, "description": "Search profiles by name"},
+    {"name": "location", "type": "string", "required": false, "description": "Filter by location text"},
+    {"name": "geoId", "type": "string", "required": false, "description": "Filter by location as Geo ID. Overrides location"},
+    {"name": "page", "type": "string", "required": false, "description": "Page number for pagination"}
+  ],
+  "headers": [],
+  "request_body": null,
+  "response_schema": {
+    "elements": [{
+      "id": "string",
+      "publicIdentifier": "string",
+      "name": "string",
+      "position": "string",
+      "location": {"linkedinText": "string"},
+      "linkedinUrl": "string",
+      "photo": "string",
+      "hidden": "boolean"
+    }],
+    "pagination": {
+      "totalPages": "integer", "totalElements": "integer", "pageNumber": "integer",
+      "previousElements": "integer", "pageSize": "integer", "paginationToken": "string|null"
+    },
+    "status": "string",
+    "error": "string",
+    "query": {"search": "string", "companyId": "string", "location": "string", "geoId": "string", "page": "string"}
+  },
+  "error_schema": {"error": "integer", "message": "string"},
+  "notes": "search is required. Location text uses autocomplete; use geo search for precise IDs."
+}

@@ -1,0 +1,54 @@
+{
+  "resource": "ads",
+  "action": "get",
+  "method": "GET",
+  "upstream_path": "/linkedin/ad",
+  "como_path": "/v1/ghost/ad",
+  "summary": "Retrieve detailed information about a specific ad using its unique identifier or URL.",
+  "query_params": [
+    {"name": "adId", "type": "string", "required": false, "description": "The unique identifier of the ad"},
+    {"name": "url", "type": "string", "required": false, "description": "The URL of the ad"}
+  ],
+  "headers": [],
+  "request_body": null,
+  "response_schema": {
+    "id": "string",
+    "variants": [{
+      "advertiser": {
+        "name": "string|null",
+        "linkedinUrl": "string",
+        "imageUrl": "string|null",
+        "headline": "string|null"
+      },
+      "content": {
+        "description": "string|null",
+        "imageUrl": "string|null",
+        "videoThumbnailUrl": "string|null",
+        "videoSource": "null",
+        "targetUrl": "string|null",
+        "headline": "string|null",
+        "ctaLabel": "string|null",
+        "slides": [{"imageUrl": "string|null", "targetUrl": "string|null", "title": "string|null"}]
+      },
+      "creativeType": "string|null"
+    }],
+    "about": {
+      "format": "string|null",
+      "advertiserName": "string|null",
+      "advertiserUrl": "string|null",
+      "paidBy": "string|null",
+      "ranFrom": "string|null",
+      "ranTo": "string|null"
+    },
+    "impressions": {
+      "total": "string|null",
+      "byCountry": [{"name": "string|null", "percentage": "string|null"}]
+    },
+    "targeting": {
+      "segments": [{"name": "string", "includes": ["string"], "excludes": ["string"]}],
+      "parameters": [{"name": "string", "targeted": "boolean", "excluded": "boolean"}]
+    }
+  },
+  "error_schema": {"error": "integer", "message": "string"},
+  "notes": "Requires one of: adId, url. Returns 400 for invalid params, 404 if ad not found."
+}

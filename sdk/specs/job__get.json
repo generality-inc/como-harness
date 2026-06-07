@@ -1,0 +1,53 @@
+{
+  "resource": "job",
+  "action": "get",
+  "method": "GET",
+  "upstream_path": "/linkedin/job",
+  "como_path": "/v1/ghost/job",
+  "summary": "Retrieve job posting details by ID or URL.",
+  "query_params": [
+    {"name": "jobId", "type": "string", "required": false, "description": "ID of the job"},
+    {"name": "url", "type": "string", "required": false, "description": "URL of the job"}
+  ],
+  "headers": [],
+  "request_body": null,
+  "response_schema": {
+    "element": {
+      "id": "string",
+      "title": "string",
+      "linkedinUrl": "string",
+      "jobState": "string",
+      "postedDate": "string (date-time)",
+      "descriptionText": "string",
+      "descriptionHtml": "string",
+      "location": {
+        "linkedinText": "string",
+        "postalAddress": "string|null",
+        "parsed": {
+          "text": "string", "countryCode": "string", "regionCode": "string|null",
+          "country": "string", "countryFull": "string", "state": "string", "city": "string"
+        }
+      },
+      "employmentType": "string",
+      "workplaceType": "string",
+      "workRemoteAllowed": "boolean",
+      "easyApplyUrl": "string",
+      "applicants": "integer",
+      "companyName": "string",
+      "companyLogo": "string",
+      "companyLink": "string",
+      "companyUniversalName": "string",
+      "salary": {"min": "string", "max": "string", "currency": "string", "text": "string"},
+      "views": "integer",
+      "expireAt": "string (date-time)",
+      "new": "boolean",
+      "jobApplicationLimitReached": "boolean",
+      "applicantTrackingSystem": "string"
+    },
+    "status": "string",
+    "error": "string",
+    "query": {"jobId": "string", "url": "string"}
+  },
+  "error_schema": {"error": "integer", "message": "string"},
+  "notes": "Requires one of: jobId, url. Returns 400 for invalid request parameters."
+}

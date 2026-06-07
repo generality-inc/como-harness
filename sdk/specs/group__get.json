@@ -1,0 +1,50 @@
+{
+  "resource": "group",
+  "action": "get",
+  "method": "GET",
+  "upstream_path": "/linkedin/group",
+  "como_path": "/v1/ghost/group",
+  "summary": "Retrieve details about a group using its URL or ID.",
+  "query_params": [
+    {"name": "url", "type": "string", "required": false, "description": "URL of the group"},
+    {"name": "groupId", "type": "string", "required": false, "description": "ID of the group"}
+  ],
+  "headers": [],
+  "request_body": null,
+  "response_schema": {
+    "element": {
+      "id": "string",
+      "linkedinUrl": "string",
+      "name": "string|null",
+      "memberCount": "integer|null",
+      "logo": {"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"},
+      "heroImage": {"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"},
+      "description": "string|null",
+      "rules": "string|null",
+      "createdAt": {"date": "string (date-time)", "timestamp": "integer (unix)"},
+      "groupPlusStatusActive": "boolean",
+      "postApprovalEnabled": "boolean",
+      "invitationLevel": "string|null",
+      "welcomeNote": "string|null",
+      "automatedWelcomeNoteEnabled": "boolean",
+      "publicVisibility": "boolean",
+      "admins": {
+        "totalCount": "integer",
+        "text": "string|null",
+        "profiles": [{
+          "id": "string",
+          "linkedinUrl": "string",
+          "firstName": "string",
+          "lastName": "string",
+          "headline": "string|null",
+          "picture": "string|null"
+        }]
+      }
+    },
+    "status": "string",
+    "error": "string",
+    "query": {"url": "string"}
+  },
+  "error_schema": {"error": "integer", "message": "string"},
+  "notes": "Requires one of: url, groupId."
+}

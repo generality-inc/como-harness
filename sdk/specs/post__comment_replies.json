@@ -1,0 +1,44 @@
+{
+  "resource": "post",
+  "action": "comment_replies",
+  "method": "GET",
+  "upstream_path": "/linkedin/post-comment-replies",
+  "como_path": "/v1/ghost/post-comment-replies",
+  "summary": "Retrieve all replies to a specific comment on a post.",
+  "query_params": [
+    {"name": "url", "type": "string", "required": true, "description": "URL of the comment"},
+    {"name": "paginationToken", "type": "string", "required": false, "description": "Token from previous page response for pagination"}
+  ],
+  "headers": [],
+  "request_body": null,
+  "response_schema": {
+    "elements": [{
+      "id": "string",
+      "linkedinUrl": "string",
+      "commentary": "string",
+      "createdAt": "string (date-time)",
+      "numComments": "integer",
+      "numShares": "integer|null",
+      "numImpressions": "integer|null",
+      "reactionTypeCounts": [{"type": "enum (LIKE|EMPATHY|PRAISE|INTEREST|MAYBE)", "count": "integer"}],
+      "postId": "string",
+      "actor": {
+        "id": "string", "name": "string", "linkedinUrl": "string", "position": "string", "pictureUrl": "string",
+        "picture": {"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"},
+        "author": "boolean"
+      },
+      "createdAtTimestamp": "integer (int64)",
+      "pinned": "boolean",
+      "contributed": "boolean",
+      "edited": "boolean"
+    }],
+    "pagination": {
+      "totalPages": "integer", "totalElements": "integer", "pageNumber": "integer",
+      "previousElements": "integer", "pageSize": "integer", "paginationToken": "string|null"
+    },
+    "status": "string",
+    "error": "string"
+  },
+  "error_schema": {"error": "integer", "message": "string"},
+  "notes": "Returns 400 for invalid request parameters."
+}

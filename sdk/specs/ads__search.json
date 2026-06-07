@@ -1,0 +1,32 @@
+{
+  "resource": "ads",
+  "action": "search",
+  "method": "GET",
+  "upstream_path": "/linkedin/ad-search",
+  "como_path": "/v1/ghost/ad-search",
+  "summary": "Retrieve a list of ads matching specified search criteria from the ad library.",
+  "query_params": [
+    {"name": "searchUrl", "type": "string", "required": false, "description": "Complete ad library search URL to scrape"},
+    {"name": "keyword", "type": "string", "required": false, "description": "Search by keyword"},
+    {"name": "accountOwner", "type": "string", "required": false, "description": "Search by company or advertiser name"},
+    {"name": "countries", "type": "string", "required": false, "description": "Country codes (comma-separated or 'ALL'). Example: 'US,GB,FR'"},
+    {"name": "dateOption", "type": "string", "required": false, "description": "Date filter: 'last-30-days', 'current-month', 'current-year', 'last-year', or 'custom-date-range'"},
+    {"name": "startdate", "type": "string", "required": false, "description": "Start date in YYYY-MM-DD format for custom date ranges"},
+    {"name": "enddate", "type": "string", "required": false, "description": "End date in YYYY-MM-DD format for custom date ranges"},
+    {"name": "paginationToken", "type": "string", "required": false, "description": "Token for fetching subsequent pages"}
+  ],
+  "headers": [],
+  "request_body": null,
+  "response_schema": {
+    "elements": ["object"],
+    "pagination": {
+      "totalPages": "integer", "totalElements": "integer", "pageNumber": "integer",
+      "previousElements": "integer", "pageSize": "integer", "paginationToken": "string|null"
+    },
+    "status": "string",
+    "error": "string",
+    "query": {"search": "string"}
+  },
+  "error_schema": {"error": "integer", "message": "string"},
+  "notes": "Either searchUrl or individual parameters (keyword, accountOwner, etc.) may be used. Pagination via paginationToken."
+}

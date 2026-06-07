@@ -1,0 +1,50 @@
+{
+  "resource": "job",
+  "action": "search",
+  "method": "GET",
+  "upstream_path": "/linkedin/job-search",
+  "como_path": "/v1/ghost/job-search",
+  "summary": "Search job postings by title, company, location, and employment characteristics.",
+  "query_params": [
+    {"name": "search", "type": "string", "required": false, "description": "Search jobs by title"},
+    {"name": "companyId", "type": "string", "required": false, "description": "Filter by company ID (comma-separated for multiple)"},
+    {"name": "location", "type": "string", "required": false, "description": "Filter by location text"},
+    {"name": "geoId", "type": "string", "required": false, "description": "Filter by location as Geo ID. Overrides location parameter"},
+    {"name": "sortBy", "type": "string", "required": false, "description": "Sort. Supported: 'relevance', 'date'"},
+    {"name": "workplaceType", "type": "string", "required": false, "description": "Filter by workplace type (comma-separated): 'office', 'hybrid', 'remote'"},
+    {"name": "employmentType", "type": "string", "required": false, "description": "Filter by employment type (comma-separated): 'full-time', 'part-time', 'contract', 'temporary', 'internship'"},
+    {"name": "salary", "type": "string", "required": false, "description": "Filter by salary range: '40k+' through '200k+' (20k increments)"},
+    {"name": "postedLimit", "type": "string", "required": false, "description": "Filter by recency: '24h', 'week', 'month'"},
+    {"name": "experienceLevel", "type": "string", "required": false, "description": "Filter by experience level (comma-separated): 'internship', 'entry', 'associate', 'mid-senior', 'director', 'executive'"},
+    {"name": "industryId", "type": "string", "required": false, "description": "Filter by industry ID (comma-separated)"},
+    {"name": "functionId", "type": "string", "required": false, "description": "Filter by job function ID (comma-separated)"},
+    {"name": "under10Applicants", "type": "string", "required": false, "description": "Include to filter jobs with fewer than 10 applicants"},
+    {"name": "easyApply", "type": "string", "required": false, "description": "Filter by Easy Apply: 'true' or 'false'"},
+    {"name": "page", "type": "integer", "required": false, "description": "Page number for pagination"}
+  ],
+  "headers": [],
+  "request_body": null,
+  "response_schema": {
+    "elements": [{
+      "id": "string",
+      "url": "string",
+      "title": "string",
+      "postedDate": "string (date-time)",
+      "company": {"name": "string", "universalName": "string", "linkedinUrl": "string"},
+      "location": {"linkedinText": "string"},
+      "easyApply": "boolean"
+    }],
+    "pagination": {
+      "totalPages": "integer", "totalElements": "integer", "pageNumber": "integer",
+      "previousElements": "integer", "pageSize": "integer", "paginationToken": "string|null"
+    },
+    "status": "string",
+    "error": "string",
+    "query": {
+      "title": "string", "companyId": "string", "location": "string", "geoId": "string",
+      "sortBy": "string", "workplaceType": "string", "postedLimit": "string", "page": "integer"
+    }
+  },
+  "error_schema": {"error": "integer", "message": "string"},
+  "notes": "geoId overrides location text search. Multiple comma-separated values accepted for companyId, workplaceType, employmentType, experienceLevel, industryId, functionId."
+}
