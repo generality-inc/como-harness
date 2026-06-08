@@ -8,9 +8,13 @@ request shape + response parsing are unit-tested without hitting WorkOS.
 
 from __future__ import annotations
 
+import secrets
+import webbrowser
 from dataclasses import dataclass
 
 import httpx
+
+from . import _pkce
 
 AUTHENTICATE_URL = "https://api.workos.com/user_management/authenticate"
 
@@ -70,3 +74,24 @@ def refresh_tokens(
         resp = client.post(AUTHENTICATE_URL, data=body)
         resp.raise_for_status()
         return _parse(resp.json())
+
+
+def login_via_pkce(*, client_id: str, port: int = _pkce.LOOPBACK_PORT, open_browser: bool = True) -> Tokens:
+    """Full AuthKit PKCE login: generate the verifier/challenge, open the browser
+    to WorkOS, capture the code on the loopback, validate the CSRF ``state``, and
+    exchange the code for tokens. Returns the WorkOS tokens; the caller persists
+    them. The pure helpers it composes are unit-tested in test_pkce; this glue is
+    unit-tested with the I/O mocked (test_workos_auth)."""
+    verifier, challenge = _pkce.generate_pkce()
+    state = secrets.token_urlsafe(24)
+    url = _pkce.build_authorize_url(client_id=client_id, code_challenge=challenge, state=state, port=port)
+    if open_browser:
+        webbrowser.open(url)
+    result = _pkce.wait_for_callback(port=port)
+    if result.error:
+        raise RuntimeError(f"WorkOS sign-in failed: {result.error}")
+    if not result.code:
+        raise RuntimeError("no authorization code received (sign-in timed out?)")
+    if result.state != state:
+        raise RuntimeError("state mismatch — possible CSRF; aborting login")
+    return exchange_code(client_id=client_id, code=result.code, code_verifier=verifier)
