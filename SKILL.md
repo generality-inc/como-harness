@@ -266,3 +266,32 @@ asyncio.run(main())
   `employee_count`) even though the raw JSON wire form is camelCase.
 - Pagination helpers: `como.pagination.iter_pages(...)` / `aiter_pages(...)` walk pages
   (token-aware) so you don't hand-roll the `--page`/token loop.
+
+## Using an LLM in your code (`como run`)
+
+When a sub-task needs an LLM — classify/score/extract/filter a batch, evaluate
+something — write normal **Anthropic or OpenAI SDK** code and run it with
+**`como run`**. The SDKs are pre-authed to route through the como gateway, so you
+**never set an API key or base URL**, and there's no provider key on the machine.
+
+```bash
+como run -- python classify.py          # any command; gateway env injected for it only
+como run -- uv run --with anthropic classify.py   # if the SDK isn't installed yet
+```
+
+```python
+# classify.py — no api_key, no base_url; como run sets them
+import anthropic
+client = anthropic.Anthropic()
+r = client.messages.create(
+    model="claude-haiku-4-5", max_tokens=10,
+    messages=[{"role": "user", "content": f"Is {title} a decision-maker? yes/no"}],
+)
+```
+
+- Run LLM code **through `como run`** (not bare `python`) — that's what injects the
+  gateway credentials, scoped to that one process. Bare `python` won't have them.
+- Models available via the gateway: `claude-opus-4-8`, `claude-sonnet-4-6`,
+  `claude-haiku-4-5`, `gpt-4.1-nano`. Using any other model name fails.
+- Use `claude-haiku-4-5` (or `gpt-4.1-nano`) for cheap/bulk sub-calls; reserve the
+  larger models for hard reasoning.
