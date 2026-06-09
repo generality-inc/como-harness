@@ -1,122 +1,167 @@
-"""``como auth login`` / ``como auth logout`` / ``como auth whoami`` — WorkOS.
+"""``como auth login`` / ``como auth logout`` / ``como auth whoami``.
 
-``login`` uses WorkOS AuthKit's CLI Auth — the OAuth 2.0 Device Authorization
-Grant (RFC 8628; see ``_workos_auth``): WorkOS issues a short ``user_code`` + URL,
-the user approves it in a browser (any device), and the CLI polls for a WorkOS
-access + refresh token, storing the session in ``~/.config/como/credentials.json``.
-No loopback server or port — it works over SSH/headless. The transport then sends
-the access token and refreshes it on 401 (see ``_config``/``_transport``). The
-WorkOS client id for the target deployment is discovered from the public
-``/v1/cli/auth-config`` endpoint.
+Auth flow mirrors OAuth 2.0 Device Authorization Grant:
+
+  1. POST /v1/cli/device-code → server returns ``device_code`` (kept secret)
+     and ``user_code`` (printed to the user).
+  2. CLI opens the browser to ``<web>/cli/<user_code>``; the user, already
+     signed in, picks a workspace and clicks **Approve**.
+  3. CLI polls /v1/cli/poll with the device_code; once approved the
+     response carries the full API key — returned exactly once. Written to
+     ``~/.config/como/credentials.json`` with ``0600`` perms.
+
+After ``como auth login`` succeeds, every other SDK / CLI call picks the key up
+automatically (see ``_config.resolve_api_key``).
 """
 
 from __future__ import annotations
 
 import contextlib
+import json
+import platform
+import socket
+import time
+import webbrowser
+from pathlib import Path
+from typing import Any
 
 import httpx
 import typer
 
-from .._config import (
-    DEFAULT_TIMEOUT,
-    credentials_path,
-    load_credentials,
-    resolve_base_url,
-    resolve_bearer,
-    save_credentials,
-)
-from .._workos_auth import DeviceAuthError, DeviceAuthorization, login_via_device
+from .._config import DEFAULT_TIMEOUT, credentials_path, load_credentials, resolve_base_url
 
 app = typer.Typer(no_args_is_help=True, help="Authenticate the CLI/SDK against a Como workspace.")
 
 
-def _fetch_workos_client_id(api_base: str) -> str:
-    """Discover the WorkOS client id for this deployment from the public API."""
+def _device_label() -> str:
+    """Default human-readable device name: ``<user>@<hostname>`` (best effort)."""
     try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
-            resp = client.get(f"{api_base}/v1/cli/auth-config")
-            resp.raise_for_status()
-            cid = resp.json().get("workos_client_id")
-    except httpx.HTTPError as exc:
-        typer.secho(f"Couldn't reach {api_base} to start sign-in: {exc}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    if not cid:
-        typer.secho("Server did not return a WorkOS client id.", fg="red", err=True)
-        raise typer.Exit(code=1)
-    return str(cid)
+        import getpass
+
+        user = getpass.getuser()
+    except Exception:
+        user = "user"
+    return f"{user}@{socket.gethostname()} ({platform.system()})"
+
+
+def _save_credentials(payload: dict[str, Any]) -> Path:
+    path = credentials_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2))
+    path.chmod(0o600)
+    return path
 
 
 @app.command("login")
 def login(
-    base_url: str | None = typer.Option(None, "--base-url", help="Como API base URL."),
-    client_id: str | None = typer.Option(
-        None, "--client-id", help="WorkOS client id (default: discovered from the API)."
+    base_url: str | None = typer.Option(
+        None, "--base-url", help="Como API base URL. Defaults to COMO_API_BASE_URL or the production URL."
     ),
+    label: str | None = typer.Option(None, "--label", help="Display name for this device."),
     no_browser: bool = typer.Option(False, "--no-browser", help="Don't auto-open the browser."),
 ) -> None:
-    """Sign in via WorkOS CLI Auth (device authorization) and store the session."""
+    """Pair this machine with a Como workspace via the device-code flow."""
     api_base = resolve_base_url(base_url)
-    cid = client_id or _fetch_workos_client_id(api_base)
-    typer.echo(f"Signing in to {api_base} via WorkOS …")
+    device_label = label or _device_label()
 
-    def prompt(device: DeviceAuthorization) -> None:
-        url = device.verification_uri_complete or device.verification_uri
-        typer.echo()
-        typer.echo("To authorize this CLI, open:")
-        typer.secho(f"    {url}", fg="cyan")
-        typer.echo("and confirm the code:")
-        typer.secho(f"    {device.user_code}", fg="green", bold=True)
-        typer.echo()
-        typer.echo(
-            "Opening your browser…" if not no_browser else "Waiting for you to approve…",
-        )
+    typer.echo(f"Starting login at {api_base} …")
+    with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
+        start_resp = client.post(f"{api_base}/v1/cli/device-code", json={"device_label": device_label})
+        start_resp.raise_for_status()
+        start = start_resp.json()
 
-    try:
-        tokens = login_via_device(client_id=cid, open_browser=not no_browser, on_prompt=prompt)
-    except DeviceAuthError as exc:
-        typer.secho(f"Login failed: {exc}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    path = save_credentials(
-        {
-            "auth": "workos",
-            "workos_access_token": tokens.access_token,
-            "workos_refresh_token": tokens.refresh_token,
-            "workos_client_id": cid,
-            "organization_id": tokens.organization_id,
-            "user_id": tokens.user_id,
-            "base_url": api_base,
-        }
-    )
-    typer.secho("Signed in.", fg="green", bold=True)
-    typer.echo(f"Credentials written to {path}")
+    user_code = start["user_code"]
+    device_code = start["device_code"]
+    verify_url = start["verification_url_complete"]
+    expires_in = int(start.get("expires_in", 600))
+    interval = max(int(start.get("interval", 5)), 2)
+
+    typer.echo("")
+    typer.echo(f"  Your one-time code:  {typer.style(user_code, bold=True, fg='cyan')}")
+    typer.echo(f"  Visit:               {verify_url}")
+    typer.echo("")
+    if not no_browser:
+        typer.echo("Opening browser …")
+        with contextlib.suppress(Exception):
+            webbrowser.open(verify_url)
+    typer.echo("Waiting for approval (Ctrl-C to cancel) …")
+
+    deadline = time.time() + expires_in
+    while time.time() < deadline:
+        time.sleep(interval)
+        with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
+            poll_resp = client.post(f"{api_base}/v1/cli/poll", json={"device_code": device_code})
+            poll_resp.raise_for_status()
+            poll = poll_resp.json()
+        status = poll.get("status")
+        if status == "pending":
+            continue
+        if status == "approved":
+            key = poll.get("key")
+            if not key:
+                typer.secho("Server approved the device but didn't return a key.", fg="red", err=True)
+                raise typer.Exit(code=1)
+            path = _save_credentials(
+                {
+                    "api_key": key,
+                    "workspace_id": poll.get("workspace_id"),
+                    "user_id": poll.get("user_id"),
+                    "base_url": api_base,
+                    "device_label": device_label,
+                }
+            )
+            typer.secho("Logged in.", fg="green", bold=True)
+            typer.echo(f"Credentials written to {path}")
+            return
+        if status == "denied":
+            typer.secho("Login denied.", fg="red", err=True)
+            raise typer.Exit(code=1)
+        if status == "expired":
+            typer.secho("Login expired before approval.", fg="red", err=True)
+            raise typer.Exit(code=1)
+        # Unknown status — keep polling.
+
+    typer.secho("Login timed out waiting for approval.", fg="red", err=True)
+    raise typer.Exit(code=1)
 
 
 @app.command("logout")
 def logout() -> None:
-    """Forget the saved session (and revoke a legacy API key if present)."""
+    """Forget the saved API key and revoke it server-side."""
     creds = load_credentials()
     path = credentials_path()
     if creds is None and not path.exists():
         typer.echo("Not logged in.")
         return
-    # Legacy api-key sessions get a best-effort server-side revoke. WorkOS
-    # sessions are short-lived tokens that simply expire — nothing to revoke.
-    if creds and creds.get("api_key"):
+
+    if creds is not None:
         base_url = creds.get("base_url") or resolve_base_url(None)
-        api_key = str(creds["api_key"])
-        with contextlib.suppress(httpx.HTTPError):
-            with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
-                keys = client.get(f"{base_url}/v1/cli/keys", headers={"Authorization": f"Bearer {api_key}"})
-            if keys.status_code == 200:
-                own_prefix = api_key[:14]
-                for row in keys.json():
-                    if row.get("prefix") == own_prefix:
-                        with httpx.Client(timeout=DEFAULT_TIMEOUT) as deleter:
-                            deleter.delete(
-                                f"{base_url}/v1/cli/keys/{row['id']}",
-                                headers={"Authorization": f"Bearer {api_key}"},
-                            )
-                        break
+        api_key = creds.get("api_key")
+        if api_key:
+            try:
+                with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
+                    keys = client.get(
+                        f"{base_url}/v1/cli/keys",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                    )
+                if keys.status_code == 200:
+                    # Find our own key by comparing prefix.
+                    own_prefix = api_key[:14]
+                    for row in keys.json():
+                        if row.get("prefix") == own_prefix:
+                            client_del = httpx.Client(timeout=DEFAULT_TIMEOUT)
+                            try:
+                                client_del.delete(
+                                    f"{base_url}/v1/cli/keys/{row['id']}",
+                                    headers={"Authorization": f"Bearer {api_key}"},
+                                )
+                            finally:
+                                client_del.close()
+                            break
+            except httpx.HTTPError:
+                # Server unreachable — still wipe local creds.
+                pass
+
     with contextlib.suppress(FileNotFoundError):
         path.unlink()
     typer.secho("Logged out.", fg="green")
@@ -130,9 +175,12 @@ def whoami() -> None:
         typer.secho("Not logged in. Run `como auth login`.", fg="yellow")
         raise typer.Exit(code=1)
     base_url = creds.get("base_url") or resolve_base_url(None)
-    bearer = resolve_bearer(None)
+    api_key = creds["api_key"]
     with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
-        resp = client.get(f"{base_url}/v1/me", headers={"Authorization": f"Bearer {bearer}"})
+        resp = client.get(
+            f"{base_url}/v1/me",
+            headers={"Authorization": f"Bearer {api_key}"},
+        )
     if resp.status_code == 200:
         body = resp.json()
         user = body.get("user", {})

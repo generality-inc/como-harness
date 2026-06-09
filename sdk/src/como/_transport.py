@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from ._config import DEFAULT_TIMEOUT, refresh_bearer, resolve_base_url, resolve_bearer
+from ._config import DEFAULT_TIMEOUT, resolve_api_key, resolve_base_url
 from ._version import __version__
 from .errors import ComoNetworkError, error_for_status
 
@@ -46,7 +46,7 @@ class SyncTransport:
         http_client: httpx.Client | None = None,
     ) -> None:
         self._base_url = resolve_base_url(base_url)
-        self._api_key = resolve_bearer(api_key)
+        self._api_key = resolve_api_key(api_key)
         if http_client is not None:
             self._client = http_client
             self._owns_client = False
@@ -58,21 +58,11 @@ class SyncTransport:
             )
             self._owns_client = True
 
-    def _send(self, path: str, params: dict[str, str] | None) -> httpx.Response:
+    def get(self, path: str, *, params: dict[str, str] | None = None) -> Any:
         try:
-            return self._client.get(path, params=params)
+            response = self._client.get(path, params=params)
         except httpx.HTTPError as exc:
             raise ComoNetworkError(str(exc)) from exc
-
-    def get(self, path: str, *, params: dict[str, str] | None = None) -> Any:
-        response = self._send(path, params)
-        if response.status_code == 401:
-            # A WorkOS access token may have expired — refresh once and retry.
-            # Static API keys can't refresh (refresh_bearer returns None).
-            new = refresh_bearer()
-            if new is not None:
-                self._client.headers["Authorization"] = f"Bearer {new}"
-                response = self._send(path, params)
         return _handle(response)
 
     def close(self) -> None:
@@ -96,7 +86,7 @@ class AsyncTransport:
         http_client: httpx.AsyncClient | None = None,
     ) -> None:
         self._base_url = resolve_base_url(base_url)
-        self._api_key = resolve_bearer(api_key)
+        self._api_key = resolve_api_key(api_key)
         if http_client is not None:
             self._client = http_client
             self._owns_client = False
@@ -108,19 +98,11 @@ class AsyncTransport:
             )
             self._owns_client = True
 
-    async def _send(self, path: str, params: dict[str, str] | None) -> httpx.Response:
+    async def get(self, path: str, *, params: dict[str, str] | None = None) -> Any:
         try:
-            return await self._client.get(path, params=params)
+            response = await self._client.get(path, params=params)
         except httpx.HTTPError as exc:
             raise ComoNetworkError(str(exc)) from exc
-
-    async def get(self, path: str, *, params: dict[str, str] | None = None) -> Any:
-        response = await self._send(path, params)
-        if response.status_code == 401:
-            new = refresh_bearer()  # WorkOS-session refresh; None for static keys
-            if new is not None:
-                self._client.headers["Authorization"] = f"Bearer {new}"
-                response = await self._send(path, params)
         return _handle(response)
 
     async def close(self) -> None:
