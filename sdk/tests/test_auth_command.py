@@ -1,39 +1,63 @@
-"""`como auth login` command glue: discovers client id, runs the PKCE flow,
-persists the WorkOS session (flow + browser mocked; creds isolated to tmp)."""
+"""`como auth login` device-code flow: starts the flow, polls, and persists the
+minted key. The two anonymous como endpoints are mocked with respx; the user's
+browser approval (which happens on the web app) is simulated by the poll
+returning ``approved``.
+"""
 
 from __future__ import annotations
 
+import httpx
 import pytest
+import respx
 from typer.testing import CliRunner
 
 from como import _config
-from como._workos_auth import Tokens
 from como.cli import auth as auth_cli
 
 
-def test_login_command_persists_workos_session(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+@respx.mock
+def test_login_persists_minted_key(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))  # isolate credentials.json
     monkeypatch.delenv("COMO_API_KEY", raising=False)
-    monkeypatch.setattr(auth_cli, "_fetch_workos_client_id", lambda base: "client_X")
+    monkeypatch.setattr(auth_cli.time, "sleep", lambda _s: None)  # don't actually wait
 
-    captured: dict[str, object] = {}
+    base = "http://api.test"
+    respx.post(f"{base}/v1/cli/device-code").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "device_code": "DEVCODE",
+                "user_code": "ABCD-2345",
+                "verification_url": f"{base}/cli",
+                "verification_url_complete": f"{base}/cli/ABCD-2345",
+                "expires_in": 600,
+                "interval": 2,
+            },
+        )
+    )
+    # First poll still pending (user hasn't approved), then approved with the key.
+    poll_route = respx.post(f"{base}/v1/cli/poll")
+    poll_route.side_effect = [
+        httpx.Response(200, json={"status": "pending"}),
+        httpx.Response(
+            200,
+            json={
+                "status": "approved",
+                "key": "como_live_secretkey",
+                "workspace_id": "11111111-1111-1111-1111-111111111111",
+                "user_id": "22222222-2222-2222-2222-222222222222",
+            },
+        ),
+    ]
 
-    def fake_login(*, client_id: str, open_browser: bool, on_prompt: object = None) -> Tokens:
-        captured["client_id"] = client_id
-        captured["open_browser"] = open_browser
-        return Tokens(access_token="AT", refresh_token="RT", user_id="u1", organization_id="org1")
-
-    monkeypatch.setattr(auth_cli, "login_via_device", fake_login)
-
-    result = CliRunner().invoke(auth_cli.app, ["login", "--base-url", "http://api.test", "--no-browser"])
+    result = CliRunner().invoke(auth_cli.app, ["login", "--base-url", base, "--no-browser"])
     assert result.exit_code == 0, result.output
-    assert captured == {"client_id": "client_X", "open_browser": False}
+    assert "ABCD-2345" in result.output  # the one-time code is shown to the user
 
     creds = _config.load_credentials()
     assert creds is not None
-    assert creds["workos_access_token"] == "AT"
-    assert creds["workos_refresh_token"] == "RT"
-    assert creds["workos_client_id"] == "client_X"
-    assert creds["base_url"] == "http://api.test"
-    # The transport's bearer resolves to the WorkOS access token now.
-    assert _config.resolve_bearer(None) == "AT"
+    assert creds["api_key"] == "como_live_secretkey"
+    assert creds["base_url"] == base
+    assert creds["workspace_id"] == "11111111-1111-1111-1111-111111111111"
+    # The transport resolves this key for subsequent calls.
+    assert _config.resolve_api_key(None) == "como_live_secretkey"
