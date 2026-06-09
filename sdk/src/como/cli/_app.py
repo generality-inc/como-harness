@@ -31,6 +31,9 @@ from . import (
     profile as _profile_cli,
 )
 from . import (
+    run as _run_cli,
+)
+from . import (
     service as _service_cli,
 )
 
@@ -71,3 +74,14 @@ app.add_typer(_leads_cli.app, name="leads")
 app.add_typer(_post_cli.app, name="post")
 app.add_typer(_profile_cli.app, name="profile")
 app.add_typer(_service_cli.app, name="service")
+
+# Passthrough launchers: run a command (or Claude Code) with the LLM gateway env
+# injected for that child process only — `--` separates como's flags from the
+# command. `ignore_unknown_options` lets the wrapped command keep its own flags.
+_RUN_CTX = {"allow_extra_args": True, "ignore_unknown_options": True}
+app.command(
+    "run", context_settings=_RUN_CTX, help="Run a command with the como LLM gateway injected: como run -- <cmd>"
+)(_run_cli.run)
+app.command("claude", context_settings=_RUN_CTX, help="Run Claude Code routed through the como LLM gateway.")(
+    _run_cli.claude
+)
