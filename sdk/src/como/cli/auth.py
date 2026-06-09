@@ -1,11 +1,12 @@
 """``como auth login`` / ``como auth logout`` / ``como auth whoami`` — WorkOS.
 
-``login`` runs WorkOS AuthKit's Authorization-Code + PKCE flow (see ``_pkce`` +
-``_workos_auth``): open the browser, capture the ``code`` on a ``127.0.0.1``
-loopback, exchange it for a WorkOS access + refresh token, and store the session
-in ``~/.config/como/credentials.json``. The transport then sends the access
-token and refreshes it on 401 (see ``_config``/``_transport``). The WorkOS
-client id for the target deployment is discovered from the public
+``login`` uses WorkOS AuthKit's CLI Auth — the OAuth 2.0 Device Authorization
+Grant (RFC 8628; see ``_workos_auth``): WorkOS issues a short ``user_code`` + URL,
+the user approves it in a browser (any device), and the CLI polls for a WorkOS
+access + refresh token, storing the session in ``~/.config/como/credentials.json``.
+No loopback server or port — it works over SSH/headless. The transport then sends
+the access token and refreshes it on 401 (see ``_config``/``_transport``). The
+WorkOS client id for the target deployment is discovered from the public
 ``/v1/cli/auth-config`` endpoint.
 """
 
@@ -24,7 +25,7 @@ from .._config import (
     resolve_bearer,
     save_credentials,
 )
-from .._workos_auth import login_via_pkce
+from .._workos_auth import DeviceAuthError, DeviceAuthorization, login_via_device
 
 app = typer.Typer(no_args_is_help=True, help="Authenticate the CLI/SDK against a Como workspace.")
 
@@ -53,13 +54,26 @@ def login(
     ),
     no_browser: bool = typer.Option(False, "--no-browser", help="Don't auto-open the browser."),
 ) -> None:
-    """Sign in via WorkOS (Authorization Code + PKCE) and store the session."""
+    """Sign in via WorkOS CLI Auth (device authorization) and store the session."""
     api_base = resolve_base_url(base_url)
     cid = client_id or _fetch_workos_client_id(api_base)
     typer.echo(f"Signing in to {api_base} via WorkOS …")
+
+    def prompt(device: DeviceAuthorization) -> None:
+        url = device.verification_uri_complete or device.verification_uri
+        typer.echo()
+        typer.echo("To authorize this CLI, open:")
+        typer.secho(f"    {url}", fg="cyan")
+        typer.echo("and confirm the code:")
+        typer.secho(f"    {device.user_code}", fg="green", bold=True)
+        typer.echo()
+        typer.echo(
+            "Opening your browser…" if not no_browser else "Waiting for you to approve…",
+        )
+
     try:
-        tokens = login_via_pkce(client_id=cid, open_browser=not no_browser)
-    except RuntimeError as exc:
+        tokens = login_via_device(client_id=cid, open_browser=not no_browser, on_prompt=prompt)
+    except DeviceAuthError as exc:
         typer.secho(f"Login failed: {exc}", fg="red", err=True)
         raise typer.Exit(code=1) from exc
     path = save_credentials(
@@ -92,9 +106,7 @@ def logout() -> None:
         api_key = str(creds["api_key"])
         with contextlib.suppress(httpx.HTTPError):
             with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
-                keys = client.get(
-                    f"{base_url}/v1/cli/keys", headers={"Authorization": f"Bearer {api_key}"}
-                )
+                keys = client.get(f"{base_url}/v1/cli/keys", headers={"Authorization": f"Bearer {api_key}"})
             if keys.status_code == 200:
                 own_prefix = api_key[:14]
                 for row in keys.json():
