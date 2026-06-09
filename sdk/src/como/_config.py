@@ -56,3 +56,52 @@ def resolve_base_url(explicit: str | None) -> str:
     if creds and creds.get("base_url"):
         return str(creds["base_url"]).rstrip("/")
     return DEFAULT_BASE_URL.rstrip("/")
+
+
+def save_credentials(payload: dict[str, Any]) -> Path:
+    """Write ``credentials.json`` (0600), creating the dir. Used by
+    ``como auth login`` and the WorkOS token-refresh path."""
+    path = credentials_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2))
+    path.chmod(0o600)
+    return path
+
+
+def resolve_bearer(explicit: str | None) -> str:
+    """The Bearer token to send, supporting both auth modes: explicit → env →
+    a stored WorkOS access token (``como auth login``) → a stored API key."""
+    if explicit:
+        return explicit
+    env_value = os.environ.get(ENV_API_KEY)
+    if env_value:
+        return env_value
+    creds = load_credentials() or {}
+    if creds.get("workos_access_token"):
+        return str(creds["workos_access_token"])
+    if creds.get("api_key"):
+        return str(creds["api_key"])
+    raise RuntimeError(
+        f"Not signed in. Run `como auth login`, set {ENV_API_KEY} in the environment, "
+        "or pass api_key=... to the client."
+    )
+
+
+def refresh_bearer() -> str | None:
+    """If the stored credentials are a WorkOS session, refresh the access token
+    (rotating + persisting the refresh token) and return the new access token.
+    Returns None for a static API key — nothing to refresh."""
+    creds = load_credentials()
+    if not creds or not creds.get("workos_refresh_token") or not creds.get("workos_client_id"):
+        return None
+    from ._workos_auth import refresh_tokens
+
+    tokens = refresh_tokens(
+        client_id=str(creds["workos_client_id"]),
+        refresh_token=str(creds["workos_refresh_token"]),
+        organization_id=creds.get("organization_id"),
+    )
+    creds["workos_access_token"] = tokens.access_token
+    creds["workos_refresh_token"] = tokens.refresh_token  # rotated — persist it
+    save_credentials(creds)
+    return tokens.access_token
