@@ -5,8 +5,8 @@ It covers profiles, companies, jobs, posts, leads, groups, ads, services, and ge
 every resource as both a shell command (under **`como linkedin …`**) and an importable
 client (`import como`).
 
-This data comes from Como's **ghost** LinkedIn research API — read-only public LinkedIn
-data. It does **not** use, require, or touch your own LinkedIn account or login.
+This data comes from Como's **ghost** LinkedIn research API — read-only LinkedIn data;
+it needs no LinkedIn account of your own.
 
 This is the canonical reference. Read the **Core concepts** and the **Recipes** before
 non-trivial work — most mistakes come from skipping them (using keyword search when you

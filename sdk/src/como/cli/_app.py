@@ -69,9 +69,9 @@ linkedin = typer.Typer(
     name="linkedin",
     no_args_is_help=True,
     help=(
-        "Ghost LinkedIn research — read-only public LinkedIn data (companies, jobs, "
-        "people, posts, groups, ads, services, locations) via the como ghost research "
-        "API. It does NOT use, require, or touch your own LinkedIn account or login.\n\n"
+        "Ghost LinkedIn research — read-only LinkedIn data (companies, jobs, people, "
+        "posts, groups, ads, services, locations) via the como ghost research API; "
+        "needs no LinkedIn account of your own.\n\n"
         "Key idea: a `search` returns SHALLOW hits (no descriptions/full fields) — call "
         "the matching `get` for the full record. Resolve an entity to an ID first "
         "(`company get` -> id) and pass --company-id / --geo-id rather than fuzzy keyword "
