@@ -1,8 +1,12 @@
-# como — LinkedIn data CLI & SDK
+# como linkedin — LinkedIn research data (CLI & SDK)
 
-`como` is a typed CLI **and** Python SDK for LinkedIn data via the Como API. It covers
-profiles, companies, jobs, posts, leads, groups, ads, services, and geo IDs — every
-resource as both a shell command and an importable client (`import como`).
+`como` is a typed CLI **and** Python SDK for LinkedIn research data via the Como API.
+It covers profiles, companies, jobs, posts, leads, groups, ads, services, and geo IDs —
+every resource as both a shell command (under **`como linkedin …`**) and an importable
+client (`import como`).
+
+This data comes from Como's **ghost** LinkedIn research API — read-only public LinkedIn
+data. It does **not** use, require, or touch your own LinkedIn account or login.
 
 This is the canonical reference. Read the **Core concepts** and the **Recipes** before
 non-trivial work — most mistakes come from skipping them (using keyword search when you
@@ -16,11 +20,12 @@ have an ID, or reading a shallow search hit and thinking it's the full record).
 export COMO_API_KEY=como_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     # required
 export COMO_API_BASE_URL=https://api.como.sh                      # optional; override for non-prod
 como --help                                                       # top-level help
-como <resource> --help                                            # resource help
-como <resource> <command> --help                                  # full option list for a command
+como linkedin --help                                              # all LinkedIn resources
+como linkedin <resource> --help                                   # resource help
+como linkedin <resource> <command> --help                         # full option list for a command
 ```
 
-`como <resource> <command> --help` is authoritative for the exact flags — this doc lists
+`como linkedin <resource> <command> --help` is authoritative for the exact flags — this doc lists
 the useful ones but `--help` never lies.
 
 ## Output
@@ -29,8 +34,8 @@ Default output is single-line JSON (pipe to `jq`). Add `--pretty` for human-read
 syntax-highlighted JSON.
 
 ```bash
-como company get --universal-name openai --pretty
-como job search --company-id 1441 | jq '.elements[].title'
+como linkedin company get --universal-name openai --pretty
+como linkedin job search --company-id 1441 | jq '.elements[].title'
 ```
 
 ---
@@ -51,9 +56,9 @@ keyword search is fuzzy and returns *other companies' results*. The resolve-firs
 
 ```bash
 # company name/URL/id  ->  full record; the numeric id is top-level `.id`
-como company get --url https://www.linkedin.com/company/openai | jq -r '.id'   # e.g. 11130470
+como linkedin company get --url https://www.linkedin.com/company/openai | jq -r '.id'   # e.g. 11130470
 # then scope by that id (clean, no cross-company noise):
-como job search --company-id 11130470
+como linkedin job search --company-id 11130470
 ```
 
 Same for people (`profile get … | jq -r .id` → `--profile-id`) and locations (geo, below).
@@ -62,7 +67,7 @@ Same for people (`profile get … | jq -r .id` → `--profile-id`) and locations
 mis-resolve (`NY`→New Zealand, `UK`→Ukraine). For precision, resolve a geo id and pass it:
 
 ```bash
-como geo search --search "New York" | jq -r '.elements[0].geoId'   # closest-match geo id
+como linkedin geo search --search "New York" | jq -r '.elements[0].geoId'   # closest-match geo id
 # then: --geo-id <id> on company/profile/job/leads/service search
 ```
 
@@ -82,12 +87,12 @@ read page 1, grab `.pagination.paginationToken`, pass it with `--page 2`, repeat
 ### company
 
 ```bash
-como company get --universal-name openai            # one of: --url | --universal-name
-como company get --url https://www.linkedin.com/company/openai
-como company get --universal-name 105628248         # a numeric company id also works (in --universal-name or --url)
-como company search --search "fintech" --location "Australia" \
+como linkedin company get --universal-name openai            # one of: --url | --universal-name
+como linkedin company get --url https://www.linkedin.com/company/openai
+como linkedin company get --universal-name 105628248         # a numeric company id also works (in --universal-name or --url)
+como linkedin company search --search "fintech" --location "Australia" \
                     --company-size "11-50,51-200,201-500" --geo-id <id> --industry-id <id> --page 1
-como company posts --company <url|id|universalName> --posted-limit month --page 1
+como linkedin company posts --company <url|id|universalName> --posted-limit month --page 1
 ```
 `get` returns the full company: **`id`, `universalName`, `name`, `website`, `description`,
 `employeeCount`, `employeeCountRange`, `followerCount`, `foundedOn`, `headquarter`, industry**.
@@ -97,9 +102,9 @@ comma-joined ranges (`1-10,11-50,51-200,201-500,501-1000,1001-5000,5001-10000,10
 ### job
 
 ```bash
-como job get --job-id 4153069088                    # one of: --job-id | --url. FULL record (descriptionText)
-como job search --company-id 1441                   # PREFER company-id over --search
-como job search --search "staff engineer" --location "US" \
+como linkedin job get --job-id 4153069088                    # one of: --job-id | --url. FULL record (descriptionText)
+como linkedin job search --company-id 1441                   # PREFER company-id over --search
+como linkedin job search --search "staff engineer" --location "US" \
                 --workplace-type "hybrid,remote" --employment-type "full-time" \
                 --posted-limit month --sort-by date --salary "100k+" \
                 --experience-level <id> --geo-id <id> --page 1
@@ -117,15 +122,15 @@ como job search --search "staff engineer" --location "US" \
 ### profile
 
 ```bash
-como profile get --public-identifier williamhgates  # one of: --url | --public-identifier | --profile-id
-como profile get --url https://www.linkedin.com/in/williamhgates --main          # --main = cheaper, lighter profile
-como profile get --url <url> --find-email --skip-smtp                             # best-effort work-email lookup
-como profile search --search "Mark" --current-company <url|id> --title "engineer" \
+como linkedin profile get --public-identifier williamhgates  # one of: --url | --public-identifier | --profile-id
+como linkedin profile get --url https://www.linkedin.com/in/williamhgates --main          # --main = cheaper, lighter profile
+como linkedin profile get --url <url> --find-email --skip-smtp                             # best-effort work-email lookup
+como linkedin profile search --search "Mark" --current-company <url|id> --title "engineer" \
                     --location "US" --geo-id <id> --first-name Mark --last-name Peterson \
                     --school <id> --past-company <id> --follower-of <id> --page 1
-como profile posts --profile <url|id> --page 1
-como profile comments --profile <url|id>
-como profile reactions --profile <url|id>
+como linkedin profile posts --profile <url|id> --page 1
+como linkedin profile comments --profile <url|id>
+como linkedin profile reactions --profile <url|id>
 ```
 `get` returns the full profile (name, headline, experience, education, skills, location).
 `--find-email` runs an independent email lookup (best-effort; not always found). `profile
@@ -136,11 +141,11 @@ Member" with no link; for serious people-finding use **`leads search`** instead.
 
 ```bash
 # Everyone matching a title at a company:
-como leads search --current-companies <companyUrlOrId> --current-job-titles "Software Engineer" --page 1
+como linkedin leads search --current-companies <companyUrlOrId> --current-job-titles "Software Engineer" --page 1
 # People who recently changed jobs into a company (recent hires):
-como leads search --current-companies <companyUrlOrId> --recently-changed-jobs --page 1
+como linkedin leads search --current-companies <companyUrlOrId> --recently-changed-jobs --page 1
 # Rich inclusion + EXCLUSION filters (all comma-joined multi-value):
-como leads search --search "Machine Learning Engineer" --locations "US" \
+como linkedin leads search --search "Machine Learning Engineer" --locations "US" \
                   --seniority-level-ids "120,210" --profile-languages en \
                   --exclude-seniority-level-ids "300,310" --company-headcount "51-200,201-500"
 ```
@@ -156,16 +161,16 @@ strings, not repeated flags.**
 ### post
 
 ```bash
-como post get --url "https://www.linkedin.com/feed/update/urn:li:activity:..."   # FULL post
-como post search --search "AI agents" --posted-limit 24h --sort-by relevance --page 1
-como post search --authors-company <url|id>                # all posts by a company's employees
-como post company-posts --company <url|id|universalName> --posted-limit month --page 1
-como post user-posts --profile <url|id> --posted-limit month --sort-by date --page 1
-como post group-posts --group <url|id> --page 1
-como post comments --post <url> --sort-by relevance --page 1
-como post reactions --post <url> --page 1
-como post comment-replies --comment <url> --page 1
-como post comment-reactions --comment <url> --page 1
+como linkedin post get --url "https://www.linkedin.com/feed/update/urn:li:activity:..."   # FULL post
+como linkedin post search --search "AI agents" --posted-limit 24h --sort-by relevance --page 1
+como linkedin post search --authors-company <url|id>                # all posts by a company's employees
+como linkedin post company-posts --company <url|id|universalName> --posted-limit month --page 1
+como linkedin post user-posts --profile <url|id> --posted-limit month --sort-by date --page 1
+como linkedin post group-posts --group <url|id> --page 1
+como linkedin post comments --post <url> --sort-by relevance --page 1
+como linkedin post reactions --post <url> --page 1
+como linkedin post comment-replies --comment <url> --page 1
+como linkedin post comment-reactions --comment <url> --page 1
 ```
 `post search` extra filters: `--content-type --mentioning-member --mentioning-company
 --author-keywords --authors-industry-id`. Reactions return profiles in opaque-ID URL form;
@@ -174,13 +179,13 @@ to get a normal profile URL, `profile get` each (use `--main` to keep it cheap).
 ### group / ads / service / geo
 
 ```bash
-como group get --group-id 1898033          # or --url
-como group search --search "python developers" --page 1
-como ads get --ad-id 1104386363            # or --url
-como ads search --keyword sales --account-owner ai --countries "US,CA,FR" \
+como linkedin group get --group-id 1898033          # or --url
+como linkedin group search --search "python developers" --page 1
+como linkedin ads get --ad-id 1104386363            # or --url
+como linkedin ads search --keyword sales --account-owner ai --countries "US,CA,FR" \
                 --date-option custom-date-range --startdate 2025-01-01 --enddate 2025-12-31
-como service search --search "web development" --location "Australia" --geo-id <id> --page 1
-como geo search --search "berlin"          # -> .elements[].geoId / .title
+como linkedin service search --search "web development" --location "Australia" --geo-id <id> --page 1
+como linkedin geo search --search "berlin"          # -> .elements[].geoId / .title
 ```
 
 ---
@@ -189,28 +194,28 @@ como geo search --search "berlin"          # -> .elements[].geoId / .title
 
 **Get all of a company's open jobs *with* descriptions** (resolve id → search → get each):
 ```bash
-ID=$(como company get --url <companyUrl> | jq -r '.id')
-como job search --company-id "$ID" --page 1            # repeat over .pagination.totalPages
-como job get --job-id <id>                             # full descriptionText for each hit
+ID=$(como linkedin company get --url <companyUrl> | jq -r '.id')
+como linkedin job search --company-id "$ID" --page 1            # repeat over .pagination.totalPages
+como linkedin job get --job-id <id>                             # full descriptionText for each hit
 ```
 
 **Find people at a company (and those who recently joined):**
 ```bash
-como leads search --current-companies <companyUrlOrId> --current-job-titles "Engineer" --page 1
-como leads search --current-companies <companyUrlOrId> --recently-changed-jobs --page 1
+como linkedin leads search --current-companies <companyUrlOrId> --current-job-titles "Engineer" --page 1
+como linkedin leads search --current-companies <companyUrlOrId> --recently-changed-jobs --page 1
 ```
 
 **Resolve a location to a geo id, then use it as a precise filter:**
 ```bash
-GEO=$(como geo search --search "New York" | jq -r '.elements[0].geoId')
-como leads search --current-companies <id> --geo-ids "$GEO"
+GEO=$(como linkedin geo search --search "New York" | jq -r '.elements[0].geoId')
+como linkedin leads search --current-companies <id> --geo-ids "$GEO"
 ```
 
 **Read a company's basics / a person's full profile / a work email:**
 ```bash
-como company get --url <companyUrl>        # employeeCount, website, foundedOn, headquarter, ...
-como profile get --url <profileUrl>        # full profile
-como profile get --url <profileUrl> --find-email
+como linkedin company get --url <companyUrl>        # employeeCount, website, foundedOn, headquarter, ...
+como linkedin profile get --url <profileUrl>        # full profile
+como linkedin profile get --url <profileUrl> --find-email
 ```
 
 ---

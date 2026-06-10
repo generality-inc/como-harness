@@ -42,13 +42,11 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
     help=(
-        "como — typed CLI & SDK for LinkedIn data.\n\n"
-        "Resources: company, job, profile, leads (people search), post, group, ads, service, geo. "
-        "Auth via COMO_API_KEY. Add --pretty for readable JSON.\n\n"
-        "Key idea: a `search` returns SHALLOW hits (no descriptions/full fields) — call the matching "
-        "`get` for the full record. Resolve an entity to an ID first (`company get` -> id) and pass "
-        "--company-id / --geo-id rather than fuzzy keyword search. Run `como <resource> <command> --help` "
-        "for full options."
+        "como — typed CLI & SDK for the como platform.\n\n"
+        "Groups: `como linkedin` (ghost LinkedIn research data — companies, jobs, people, "
+        "posts, groups, ads, services, locations), `como auth` (sign in), "
+        "`como run -- <cmd>` (run code with the LLM gateway injected). "
+        "Auth via COMO_API_KEY. Add --pretty for readable JSON."
     ),
     context_settings={"help_option_names": ["-h", "--help"]},
 )
@@ -64,16 +62,35 @@ def _root(
         raise typer.Exit()
 
 
-app.add_typer(_ads_cli.app, name="ads")
+# ---- `como linkedin` — the ghost LinkedIn research API -----------------------
+# All read-only public LinkedIn data lives under one group. It is sourced from
+# the como "ghost" research API and does NOT touch the user's own LinkedIn login.
+linkedin = typer.Typer(
+    name="linkedin",
+    no_args_is_help=True,
+    help=(
+        "Ghost LinkedIn research — read-only public LinkedIn data (companies, jobs, "
+        "people, posts, groups, ads, services, locations) via the como ghost research "
+        "API. It does NOT use, require, or touch your own LinkedIn account or login.\n\n"
+        "Key idea: a `search` returns SHALLOW hits (no descriptions/full fields) — call "
+        "the matching `get` for the full record. Resolve an entity to an ID first "
+        "(`company get` -> id) and pass --company-id / --geo-id rather than fuzzy keyword "
+        "search. Run `como linkedin <resource> <command> --help` for full options."
+    ),
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+linkedin.add_typer(_company_cli.app, name="company")
+linkedin.add_typer(_job_cli.app, name="job")
+linkedin.add_typer(_profile_cli.app, name="profile")
+linkedin.add_typer(_leads_cli.app, name="leads")
+linkedin.add_typer(_post_cli.app, name="post")
+linkedin.add_typer(_group_cli.app, name="group")
+linkedin.add_typer(_ads_cli.app, name="ads")
+linkedin.add_typer(_service_cli.app, name="service")
+linkedin.add_typer(_geo_cli.app, name="geo")
+
+app.add_typer(linkedin, name="linkedin")
 app.add_typer(_auth_cli.app, name="auth")
-app.add_typer(_company_cli.app, name="company")
-app.add_typer(_geo_cli.app, name="geo")
-app.add_typer(_group_cli.app, name="group")
-app.add_typer(_job_cli.app, name="job")
-app.add_typer(_leads_cli.app, name="leads")
-app.add_typer(_post_cli.app, name="post")
-app.add_typer(_profile_cli.app, name="profile")
-app.add_typer(_service_cli.app, name="service")
 
 # Passthrough launchers: run a command (or Claude Code) with the LLM gateway env
 # injected for that child process only — `--` separates como's flags from the
