@@ -1,0 +1,32 @@
+---
+name: como-sales
+description: The `como` platform for sales research & list-building — ghost LinkedIn data (companies, jobs, people/leads, posts), reading/creating/editing platform lists, running LLM-in-code through the como gateway, and orchestrating research agents (local or cloud). Use for company/people/job research, building & enriching lead lists, ICP discovery, and any `como linkedin` / `como lists` / `como run` task.
+metadata:
+  short-description: como — sales research, list-building, and agent orchestration
+---
+
+# como
+
+`como` is the platform CLI + SDK for sales research and list-building. This file is a
+thin index — **read the reference doc for whatever you're doing before non-trivial work.**
+
+## What you can do → where to read
+
+| If you need to… | Read |
+|---|---|
+| Pull LinkedIn research data (companies, jobs, people/leads, posts, geo) | **[references/cli.md](references/cli.md)** — the full `como linkedin` + SDK reference |
+| Run an LLM **inside code** (classify / score / extract / filter a batch) | **[references/cli.md](references/cli.md)** → "Using an LLM in your code (`como run`)" |
+| **Drive a browser** (a source with no API — bookface/YC, a company site) | **[references/cloud-browser.md](references/cloud-browser.md)** — use the `browser-harness` skill, **cloud by default** |
+| Orchestrate a **multi-step / multi-agent** job (build a list from a source, research every row, posts→people→ICP) | **[references/workflows.md](references/workflows.md)** — run shapes + the canonical playbooks |
+
+## Two rules that prevent most mistakes (full detail in `references/cli.md`)
+1. A `search` returns **shallow** hits — call the matching `get` for the full record.
+2. Resolve an entity to an **id** first, then query by `--company-id` / `--geo-id` rather than fuzzy `--search`.
+
+## One orchestration rule (full detail in `references/workflows.md`)
+Anything that **drives a browser or does real research is a coding agent** (Claude Code +
+this skill + the `browser-harness` skill) — **not** a single LLM call. Use bare `como run`
+LLM calls only for cheap in-code steps (classify/extract/filter), never to operate the
+browser. Browser work defaults to a **cloud** browser; tell the user you're using cloud.
+
+Auth: `como auth login` stores a `como_live_` key (`COMO_API_KEY`). Add `--pretty` for readable JSON.
