@@ -1,35 +1,48 @@
 # Driving a browser for sales research
 
 Some sources have no API — a YC/bookface page, a company's own site, a portal behind a
-login. For those, **use the `browser-harness` skill** (it's a separate skill; invoke it).
-This doc is the como-specific policy on top of it.
+login. For those, drive a browser with the **`browser-harness` skill** (separate skill;
+invoke it). This doc is the como-specific policy + how to get the browser.
 
-## Cloud by default — say so
-Start a **cloud** browser (Browser Use), **not** the user's local Chrome, unless the user
-explicitly asks for local. When you start one, **tell the user**: e.g. *"Using a cloud
-browser (Browser Use) for this — say the word if you'd rather I drive your local Chrome."*
+## Cloud by default — through como, and say so
+Use a **cloud** browser, **not** the user's local Chrome, unless the user explicitly asks
+for local. Get it from como (the broker) — **don't** use a Browser Use key locally; como
+holds the key and hands back only a connection. When you start one, **tell the user**:
+*"Using a cloud browser for this — say the word if you'd rather I drive your local Chrome."*
 
-Why cloud by default: it doesn't take over the user's machine/Chrome, it runs unattended,
-and it's the same browser the cloud research agents use — so local and cloud behave the same.
+Why cloud by default: it doesn't take over the user's machine/Chrome, runs unattended, needs
+no Browser Use key on the machine, and it's the same browser the cloud research agents use —
+so local and cloud behave the same.
 
-The mechanism lives in the `browser-harness` skill — read it for the exact calls. The shape:
-```python
-# in browser-harness:
-uuid = start_remote_daemon("work", ...)   # provisions a Browser Use cloud browser, prints a liveUrl
-# … drive it: new_tab(url), js(...), click_at_xy(...), http_get(...) …
-stop_remote_daemon("work")                # ALWAYS stop when done — it ends billing
+## The flow: `como browser` → attach `browser-harness`
+```bash
+# 1. ask como for a cloud browser (platform's key; only a CDP url comes back)
+SESSION=$(como browser create)            # -> {"id": "...", "cdp_url": "...", "live_url": "..."}
+CDP=$(echo "$SESSION" | jq -r .cdp_url)
+ID=$(echo "$SESSION" | jq -r .id)
+echo "$SESSION" | jq -r .live_url         # share this with the user to watch
+
+# 2. drive it with the browser-harness skill, attached to that CDP url:
+BU_CDP_URL="$CDP" browser-harness <<'PY'
+new_tab("https://example.com"); wait_for_load(); print(page_info())
+PY
+
+# 3. ALWAYS tear it down when done
+como browser stop "$ID"
 ```
+`browser-harness` attaches to an existing browser via `BU_CDP_URL` (see its `install.md`).
 Only fall back to local Chrome (Way 1 in browser-harness) if the user asks for it.
 
 ## The browser is operated by a coding agent, not a single LLM call
-Driving a browser is **agent work** — a Claude Code instance using the `browser-harness`
-skill, iterating (screenshot → act → verify). Do **not** try to do browser steps as one
-`como run` LLM call. Use `como run` only for cheap in-code reasoning *within* the agent
-(e.g. "given this page text, extract the company rows as JSON"). See
-[workflows.md](workflows.md) for how this composes into local / cloud / parallel runs.
+Driving a browser is **agent work** — a Claude Code instance using `browser-harness`,
+iterating (screenshot → act → verify). Do **not** do browser steps as one `como run` LLM
+call. Use `como run` only for cheap in-code reasoning *within* the agent (e.g. "given this
+page text, extract the company rows as JSON"). See [workflows.md](workflows.md) for how this
+composes into local / cloud / parallel runs.
 
-## Carrying a login into the cloud browser
-If a source needs the user's session (e.g. bookface), `browser-harness` can sync the local
-Chrome profile's cookies into the cloud browser (`sync_local_profile` → `start_remote_daemon(profileId=…)`).
-Cookies only — not extensions/history. Use this when the source is auth-walled; otherwise a
-fresh cloud browser is fine.
+## Auth-walled sources (carrying the user's login)
+`como browser` gives a **fresh** cloud browser (no user cookies). If a source needs the
+user's own session (e.g. bookface behind their login), use `browser-harness`'s profile sync
+instead — `sync_local_profile(...)` → `start_remote_daemon(profileId=…)` — which carries the
+local Chrome **cookies** into a cloud browser. That path uses the user's own Browser Use key
+(from browser-harness), not the broker; tell the user you're using it so they know why.
