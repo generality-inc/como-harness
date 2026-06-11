@@ -1,3 +1,10 @@
+---
+name: como-sales
+description: The `como` CLI/SDK — ghost LinkedIn research data (companies, jobs, people/leads, posts, groups, ads, services, geo) and running LLM-in-code through the como gateway. Use for company/people/job research, building lead lists, LinkedIn data extraction, and any `como linkedin` / `como run` task.
+metadata:
+  short-description: como CLI — LinkedIn research data + LLM gateway runner
+---
+
 # como linkedin — LinkedIn research data (CLI & SDK)
 
 `como` is a typed CLI **and** Python SDK for LinkedIn research data via the Como API.
