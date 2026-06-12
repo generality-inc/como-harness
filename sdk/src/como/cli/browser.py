@@ -1,21 +1,31 @@
 """``como browser`` — provision a cloud browser through como (the broker), and
 manage persistent **browser profiles**.
 
-``como browser create`` returns a Browser Use cloud browser created with the
-**platform's** key — so no Browser Use key is needed on this machine. It prints a
-``cdp_url`` to attach a driver to (e.g. the ``browser-harness`` skill via
-``BU_CDP_URL``) plus a ``live_url`` to watch, and an ``id`` to tear it down with
-``como browser stop <id>``. The Browser Use key never leaves the platform — same
-broker pattern as the LLM gateway.
+Two noun groups:
 
-A **profile** is a persistent identity (cookies/localStorage). Log in once with
-``como browser login --profile <name> --login-url <url>`` (a human signs in via
-the live view), then start authenticated browsers with
+  Sessions (ephemeral browsers):
+    como browser create [--profile NAME]   # -> {id, cdp_url, live_url}
+    como browser stop <id>
+
+  Profiles (persistent, logged-in identities):
+    como browser profile ls
+    como browser profile create <name> [--shared] [--description ...]
+    como browser profile login <name>      # human signs in once via the live view
+    como browser profile rm <id>
+
+``create`` returns a Browser Use cloud browser made with the **platform's** key —
+no Browser Use key is needed on this machine. Attach a CDP driver to ``cdp_url``
+(e.g. the ``browser-harness`` skill via ``BU_CDP_URL``); ``live_url`` is a watch
+link; tear it down with ``stop``. The Browser Use key never leaves the platform —
+same broker pattern as the LLM gateway.
+
+A **profile** is a persistent identity (cookies/localStorage). Log in once
+(``como browser profile login <name>``), then start authenticated browsers with
 ``como browser create --profile <name>``. The agent never sees the underlying
 provider profile id — it references a profile by name or id.
 
-LinkedIn is **never** automated through here (ban risk) — the login flow refuses
-LinkedIn targets. For all LinkedIn data use ``como linkedin`` (the ghost API).
+LinkedIn is **never** automated through here (ban risk). For all LinkedIn data
+use ``como linkedin`` (the ghost API).
 """
 
 from __future__ import annotations
@@ -29,8 +39,13 @@ from .._config import DEFAULT_TIMEOUT, resolve_api_key, resolve_base_url
 
 app = typer.Typer(
     no_args_is_help=True,
-    help="Provision cloud browsers + persistent browser profiles through como.",
+    help="Cloud browsers + persistent browser profiles (via the como broker).",
 )
+profile_app = typer.Typer(
+    no_args_is_help=True,
+    help="Persistent, logged-in browser profiles agents reuse.",
+)
+app.add_typer(profile_app, name="profile")
 
 
 def _client() -> tuple[str, dict[str, str]]:
@@ -38,6 +53,9 @@ def _client() -> tuple[str, dict[str, str]]:
     return base, {"Authorization": f"Bearer {key}"}
 
 
+# --------------------------------------------------------------------------- #
+# Sessions
+# --------------------------------------------------------------------------- #
 @app.command("create")
 def create(
     profile: str | None = typer.Option(
@@ -88,8 +106,8 @@ def _fmt_row(cols: list[str], widths: list[int]) -> str:
     return "  ".join(c.ljust(w) for c, w in zip(cols, widths, strict=False))
 
 
-@app.command("profiles")
-def profiles(
+@profile_app.command("ls")
+def profile_ls(
     json_out: bool = typer.Option(False, "--json", help="Print raw JSON instead of a table."),
 ) -> None:
     """List browser profiles you can use (shared + your own private)."""
@@ -106,9 +124,9 @@ def profiles(
         typer.echo(json.dumps(rows, indent=2))
         return
     if not rows:
-        typer.secho("No browser profiles yet. Create one with `como browser profile-create`.", fg="yellow")
+        typer.secho("No browser profiles yet. Create one with `como browser profile create`.", fg="yellow")
         return
-    headers_row = ["NAME", "STATUS", "VISIBILITY", "LOGGED INTO", "ID"]
+    headers_row = ["NAME", "STATUS", "VISIBILITY", "HAS COOKIES FOR", "ID"]
     table = [
         [
             p["name"],
@@ -127,7 +145,7 @@ def profiles(
             typer.secho("    ⚠ holds LinkedIn cookies — do not automate LinkedIn (ban risk).", fg="yellow")
 
 
-@app.command("profile-create")
+@profile_app.command("create")
 def profile_create(
     name: str = typer.Argument(..., help="A label, e.g. 'Bookface'."),
     description: str | None = typer.Option(None, "--description", "-d"),
@@ -145,15 +163,12 @@ def profile_create(
         raise typer.Exit(code=1) from exc
     p = resp.json()
     typer.echo(json.dumps(p, indent=2))
-    typer.secho(
-        f"\nNow log in once:  como browser login --profile {p['name']!r} --login-url <url>",
-        fg="green",
-    )
+    typer.secho(f"\nNow log in once:  como browser profile login {p['name']!r}", fg="green")
 
 
-@app.command("profile-delete")
-def profile_delete(
-    profile_id: str = typer.Argument(..., help="The profile id from `como browser profiles`."),
+@profile_app.command("rm")
+def profile_rm(
+    profile_id: str = typer.Argument(..., help="The profile id from `como browser profile ls`."),
 ) -> None:
     """Delete a browser profile (creator or workspace admin)."""
     base, headers = _client()
@@ -169,9 +184,9 @@ def profile_delete(
     typer.secho("Deleted.", fg="green")
 
 
-@app.command("login")
-def login(
-    profile: str = typer.Option(..., "--profile", "-p", help="Profile name or id to log into."),
+@profile_app.command("login")
+def profile_login(
+    profile: str = typer.Argument(..., help="Profile name or id to log into."),
     login_url: str | None = typer.Option(
         None, "--login-url", help="Optional starting page, e.g. https://bookface.ycombinator.com"
     ),
@@ -194,7 +209,7 @@ def login(
         raise typer.Exit(code=1) from exc
     match = next((p for p in lst.json() if str(p["id"]) == profile or p["name"] == profile), None)
     if match is None:
-        typer.secho(f"No profile named or id'd {profile!r}. See `como browser profiles`.", fg="red", err=True)
+        typer.secho(f"No profile named or id'd {profile!r}. See `como browser profile ls`.", fg="red", err=True)
         raise typer.Exit(code=1)
     pid = match["id"]
 
