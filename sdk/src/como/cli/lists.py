@@ -17,11 +17,22 @@ commands accept any of the three.
 from __future__ import annotations
 
 import json
+import re
 
 import httpx
 import typer
 
 from .._config import DEFAULT_TIMEOUT, resolve_api_key, resolve_base_url
+
+# Same canonicalization the backend uses to derive a list's slug — lets a caller
+# match a list by a loosely-typed name (e.g. a plain hyphen for a stored en dash).
+_SLUG_RE = re.compile(r"[^a-z0-9_-]+")
+_MULTI_DASH_RE = re.compile(r"-+")
+
+
+def _canonical_slug(value: str) -> str:
+    return _MULTI_DASH_RE.sub("-", _SLUG_RE.sub("-", value.lower()).strip("-"))
+
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -71,8 +82,17 @@ def _resolve_list(ref: str) -> dict:
     lists = _get(_BASE_PATH)
     assert isinstance(lists, list)
     ref_l = ref.lower()
+    ref_canon = _canonical_slug(ref)
     for lst in lists:
-        if str(lst.get("id")) == ref or lst.get("slug") == ref or str(lst.get("name", "")).lower() == ref_l:
+        if (
+            str(lst.get("id")) == ref
+            or lst.get("slug") == ref
+            or str(lst.get("name", "")).lower() == ref_l
+            # Loose name match: canonicalize the input the same way slugs are
+            # derived, so "US - Seed/A/B > 20M" finds slug "us-seed-a-b-20m"
+            # even when the typed dash/punctuation differs from the stored name.
+            or _canonical_slug(str(lst.get("name", ""))) == ref_canon
+        ):
             return lst
     typer.secho(f"No list matching {ref!r}. Run `como lists ls` to see them.", fg="red", err=True)
     raise typer.Exit(code=1)
