@@ -31,3 +31,12 @@ LLM calls only for cheap in-code steps (classify/extract/filter), never to opera
 browser. Browser work defaults to a **cloud** browser; tell the user you're using cloud.
 
 Auth: `como auth login` stores a `como_live_` key (`COMO_API_KEY`). Add `--pretty` for readable JSON.
+
+## Install / keep the CLI current
+- First-time install + sign-in: **[install.md](install.md)**.
+- The `como` CLI is an **editable clone** of `como-harness`. To **update it, `git pull` that
+  clone** (re-run `uv tool install -e ./sdk` only if dependencies changed). The next `como` run
+  uses the new code. Do this **yourself** — don't ask the user — when you're told to update, or
+  when a command errors with a schema/version mismatch (e.g. a Pydantic validation error from a
+  field the API changed). If you don't know the clone's path, find it with
+  `uv tool dir`/`uv tool list` or search for a `como-harness` checkout under the user's dev dir.
