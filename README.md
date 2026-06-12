@@ -1,37 +1,29 @@
-# como-harness
+# como-harness ♞
 
-The public **como** client: a typed Python SDK + `como` CLI for LinkedIn data,
-plus the `como-sales` agent skill. The same harness powers a person working at
-their terminal, an agent prototyping locally, and an agent running in the cloud.
+The public **como** client: a typed Python SDK + `como` CLI for sales research and
+list-building — ghost LinkedIn data, platform lists, the LLM gateway, and cloud browsers —
+plus the `como-sales` agent skill. The same harness powers a person at their terminal, an
+agent prototyping locally, and an agent running in the cloud.
+
+## Setup prompt
+
+Paste into Claude Code (or Codex):
+
+```text
+Set up https://github.com/generality-inc/como-harness for me.
+
+Read `install.md` and follow the steps to install the `como` CLI, register the como-sales skill, and sign me in.
+```
+
+The agent will install the CLI, symlink the skill into your agent, install the browser-harness
+CLI, and walk you through `como auth login` (one browser approval). Manual steps are in
+[install.md](install.md).
 
 ## Layout
 
 ```
-core/      como-core  — shared Pydantic types (company / job / profile / leads / …)
-sdk/       como-sdk   — the `como` CLI + SDK (depends on como-core)
-SKILL.md              — the como-sales agent skill
-```
-
-## Install
-
-```bash
-git clone https://github.com/generality-inc/como-harness
-cd como-harness/sdk
-uv tool install -e .        # installs the global `como` command
-como --help
-```
-
-Register the skill with your agent (proper skill directory, not an `@import`):
-
-```bash
-# Claude Code
-mkdir -p ~/.claude/skills/como-sales && ln -sf "$PWD/../SKILL.md" ~/.claude/skills/como-sales/SKILL.md
-# Codex
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills/como-sales" && ln -sf "$PWD/../SKILL.md" "${CODEX_HOME:-$HOME/.codex}/skills/como-sales/SKILL.md"
-```
-
-## Auth
-
-```bash
-como auth login
+core/         como-core — shared Pydantic types (company / job / profile / leads / …)
+sdk/          como-sdk  — the `como` CLI + SDK (depends on como-core)
+skills/como/  SKILL.md + references/ — the como-sales agent skill
+install.md    first-time install + sign-in + skill registration
 ```
