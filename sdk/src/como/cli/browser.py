@@ -172,12 +172,16 @@ def profile_delete(
 @app.command("login")
 def login(
     profile: str = typer.Option(..., "--profile", "-p", help="Profile name or id to log into."),
-    login_url: str = typer.Option(..., "--login-url", help="Where the human should sign in, e.g. https://bookface.ycombinator.com"),
+    login_url: str | None = typer.Option(
+        None, "--login-url", help="Optional starting page, e.g. https://bookface.ycombinator.com"
+    ),
 ) -> None:
     """Open the profile's browser so a human can log in once.
 
-    Prints a live view URL — open it, sign in at the login URL, then press Enter
-    here to save the session into the profile. Refuses LinkedIn (ban risk).
+    Prints a live view URL — open it, go to whatever site you want, sign in, then
+    press Enter here to save the session into the profile. No destination is
+    required (``--login-url`` is just an optional starting page). LinkedIn login
+    targets are refused (ban risk).
     """
     base, headers = _client()
     # 1) Resolve the profile id (accept a name).
@@ -195,20 +199,20 @@ def login(
     pid = match["id"]
 
     # 2) Open the login browser.
+    body = {"login_url": login_url} if login_url else {}
     try:
         with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            resp = c.post(
-                f"{base}/v1/browser/profile/{pid}/login", headers=headers, json={"login_url": login_url}
-            )
+            resp = c.post(f"{base}/v1/browser/profile/{pid}/login", headers=headers, json=body)
             resp.raise_for_status()
     except httpx.HTTPError as exc:
         detail = exc.response.text if isinstance(exc, httpx.HTTPStatusError) else str(exc)
         typer.secho(f"Couldn't open login browser: {detail}", fg="red", err=True)
         raise typer.Exit(code=1) from exc
     session = resp.json()
-    typer.secho("\nOpen this live view and sign in:", fg="green", bold=True)
+    typer.secho("\nOpen this live view, go to the site you want, and sign in:", fg="green", bold=True)
     typer.echo(f"  Live view: {session['live_url']}")
-    typer.echo(f"  Sign in at: {session['login_url']}")
+    if session.get("login_url"):
+        typer.echo(f"  Starting page: {session['login_url']}")
     typer.echo("\nWhen you've finished logging in, press Enter to save the session…")
     input()
 
