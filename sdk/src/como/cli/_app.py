@@ -28,6 +28,9 @@ from . import (
     leads as _leads_cli,
 )
 from . import (
+    lists as _lists_cli,
+)
+from . import (
     post as _post_cli,
 )
 from . import (
@@ -95,6 +98,7 @@ linkedin.add_typer(_geo_cli.app, name="geo")
 app.add_typer(linkedin, name="linkedin")
 app.add_typer(_auth_cli.app, name="auth")
 app.add_typer(_browser_cli.app, name="browser")
+app.add_typer(_lists_cli.app, name="lists")
 
 # Passthrough launchers: run a command (or Claude Code) with the LLM gateway env
 # injected for that child process only — `--` separates como's flags from the

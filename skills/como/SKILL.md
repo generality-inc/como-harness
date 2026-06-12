@@ -15,6 +15,7 @@ thin index — **read the reference doc for whatever you're doing before non-tri
 | If you need to… | Read |
 |---|---|
 | Pull LinkedIn research data (companies, jobs, people/leads, posts, geo) | **[references/cli.md](references/cli.md)** — the full `como linkedin` + SDK reference |
+| **Read / build a list** (target accounts, lead lists) on the platform | **[references/lists.md](references/lists.md)** — `como lists ls / records / create / add` |
 | Run an LLM **inside code** (classify / score / extract / filter a batch) | **[references/cli.md](references/cli.md)** → "Using an LLM in your code (`como run`)" |
 | **Drive a browser** (a source with no API — bookface/YC, a company site) | **[references/cloud-browser.md](references/cloud-browser.md)** — use the `browser-harness` skill, **cloud by default** |
 | Orchestrate a **multi-step / multi-agent** job (build a list from a source, research every row, posts→people→ICP) | **[references/workflows.md](references/workflows.md)** — run shapes + the canonical playbooks |

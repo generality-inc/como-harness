@@ -48,9 +48,9 @@ start on that profile is already authenticated.
 
 ```bash
 # one-time, human in the loop — they sign in via a live view:
-como browser profile-create "Bookface" --description "YC bookface session"
-como browser login --profile "Bookface" --login-url "https://bookface.ycombinator.com"
-#   → prints a live_url; the human opens it, signs in, presses Enter to save.
+como browser profile create "Bookface" --description "YC bookface session"
+como browser profile login "Bookface"
+#   → prints a live_url; the human opens it, navigates anywhere, signs in, presses Enter to save.
 
 # every run after that — start authenticated, no login needed:
 SESSION=$(como browser create --profile "Bookface")   # -> {id, cdp_url, live_url}
@@ -60,15 +60,16 @@ new_tab("https://bookface.ycombinator.com/companies"); wait_for_load(); print(pa
 PY
 como browser stop "$ID"
 ```
-List profiles with `como browser profiles` (shared + your own). Profiles are **private** by
-default (`--shared` to let the whole workspace use one). Cookie validity is **observed**: if a
-run hits a login wall, the profile flips to `needs_login` — tell the user to re-run
-`como browser login` for it. The underlying provider profile id never reaches you; you only
-ever name a profile.
+List profiles with `como browser profile ls` (shared + your own). Profiles are **private** by
+default (`--shared` to let the whole workspace use one). Status is **observed, never guessed**:
+a fresh profile is `new`, a human login makes it `ready`, and it only flips to `needs_login`
+when an agent actually hits a login wall — if that happens, tell the user to re-run
+`como browser profile login <name>`. The underlying provider profile id never reaches you; you
+only ever name a profile.
 
 ## HARD RULE — never automate LinkedIn with a browser
 Do **not** drive LinkedIn through `browser-harness` / a cloud browser / a profile — it is a
-**ban risk** for the account. `como browser login` **refuses** LinkedIn login targets, and a
-profile that ends up holding `linkedin.com` cookies is flagged with a warning. For **all**
+**ban risk** for the account. `como browser profile login` **refuses** LinkedIn login targets,
+and a profile that ends up holding `linkedin.com` cookies is flagged with a warning. For **all**
 LinkedIn data — companies, people, jobs, posts, profiles — use **`como linkedin`** (the ghost
 research API), which needs no LinkedIn account of your own. See [cli.md](cli.md).
