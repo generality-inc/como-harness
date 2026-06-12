@@ -33,7 +33,7 @@ browser. Browser work defaults to a **cloud** browser; tell the user you're usin
 Auth: `como auth login` stores a `como_live_` key (`COMO_API_KEY`). Add `--pretty` for readable JSON.
 
 ## Install / keep the CLI current
-- First-time install + sign-in: **[install.md](install.md)**.
+- First-time install + sign-in + skill registration: see **`install.md` at the como-harness repo root**.
 - The `como` CLI is an **editable clone** of `como-harness`. To **update it, `git pull` that
   clone** (re-run `uv tool install -e ./sdk` only if dependencies changed). The next `como` run
   uses the new code. Do this **yourself** — don't ask the user — when you're told to update, or
