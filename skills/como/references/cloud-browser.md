@@ -40,9 +40,35 @@ call. Use `como run` only for cheap in-code reasoning *within* the agent (e.g. "
 page text, extract the company rows as JSON"). See [workflows.md](workflows.md) for how this
 composes into local / cloud / parallel runs.
 
-## Auth-walled sources (carrying the user's login)
-`como browser` gives a **fresh** cloud browser (no user cookies). If a source needs the
-user's own session (e.g. bookface behind their login), use `browser-harness`'s profile sync
-instead — `sync_local_profile(...)` → `start_remote_daemon(profileId=…)` — which carries the
-local Chrome **cookies** into a cloud browser. That path uses the user's own Browser Use key
-(from browser-harness), not the broker; tell the user you're using it so they know why.
+## Auth-walled sources → use a **browser profile** (log in once, reuse forever)
+`como browser create` gives a **fresh** cloud browser (no cookies). For a source behind a
+login (e.g. bookface), don't make the user log in every run — use a **profile**: a persistent
+cloud identity the platform stores. The human logs in **once**; afterwards every browser you
+start on that profile is already authenticated.
+
+```bash
+# one-time, human in the loop — they sign in via a live view:
+como browser profile-create "Bookface" --description "YC bookface session"
+como browser login --profile "Bookface" --login-url "https://bookface.ycombinator.com"
+#   → prints a live_url; the human opens it, signs in, presses Enter to save.
+
+# every run after that — start authenticated, no login needed:
+SESSION=$(como browser create --profile "Bookface")   # -> {id, cdp_url, live_url}
+CDP=$(echo "$SESSION" | jq -r .cdp_url); ID=$(echo "$SESSION" | jq -r .id)
+BU_CDP_URL="$CDP" browser-harness <<'PY'
+new_tab("https://bookface.ycombinator.com/companies"); wait_for_load(); print(page_info())
+PY
+como browser stop "$ID"
+```
+List profiles with `como browser profiles` (shared + your own). Profiles are **private** by
+default (`--shared` to let the whole workspace use one). Cookie validity is **observed**: if a
+run hits a login wall, the profile flips to `needs_login` — tell the user to re-run
+`como browser login` for it. The underlying provider profile id never reaches you; you only
+ever name a profile.
+
+## HARD RULE — never automate LinkedIn with a browser
+Do **not** drive LinkedIn through `browser-harness` / a cloud browser / a profile — it is a
+**ban risk** for the account. `como browser login` **refuses** LinkedIn login targets, and a
+profile that ends up holding `linkedin.com` cookies is flagged with a warning. For **all**
+LinkedIn data — companies, people, jobs, posts, profiles — use **`como linkedin`** (the ghost
+research API), which needs no LinkedIn account of your own. See [cli.md](cli.md).
