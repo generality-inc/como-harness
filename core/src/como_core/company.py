@@ -41,6 +41,13 @@ class _CompanyLocation(BaseModel):
     line2: str | None = None
 
 
+class _Phone(BaseModel):
+    # The ghost API returns the company phone as an object, e.g.
+    # ``{"number": "+91 44 42872155", "extension": null}`` — not a bare string.
+    number: str | None = None
+    extension: str | None = None
+
+
 class _FundingMoney(BaseModel):
     amount: str | None = None
     currency_code: str | None = None
@@ -85,7 +92,9 @@ class Company(BaseModel):
     background_covers: list[MediaImage] | None = None
     active: bool | None = None
     job_search_url: str | None = None
-    phone: str | None = None
+    # Accept both the object form (``{number, extension}``) the ghost API returns
+    # and a bare string, so the model never rejects a real company payload.
+    phone: _Phone | str | None = None
     crunchbase_funding_data: _CrunchbaseFundingData | None = None
     page_verified: bool | None = None
 
