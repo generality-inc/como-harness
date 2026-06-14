@@ -9,7 +9,13 @@ sandboxed coding agent (browser + `como`), not a single LLM call.
     como agents template > my-agent.json   # scaffold a definition to edit
     como agents create --from-file my-agent.json   # upload it to your workspace
     como agents ls                          # list your agents
+    como agents link <agent> --profile <profile>   # run it from a logged-in profile
     como agents run --attribute <col_id> --list <list_id>   # run it over a list
+
+An agent can be **linked to a browser profile** (`como browser profile ls`): every
+run then starts from that profile's logged-in snapshot, ephemerally — the run
+never writes its changes back to the profile. Link with `como agents link`, or set
+`browser_profile_id` in the definition JSON.
 
 Authoring an agent needs the `workspace:manage` role; running needs
 `records:update`.
@@ -86,6 +92,27 @@ def _resolve_agent(ref: str) -> dict:
     raise typer.Exit(code=1)
 
 
+def _list_profiles() -> list[dict]:
+    """All browser profiles the caller can use (shared + own private)."""
+    profiles = _req("GET", "/v1/browser/profiles")
+    return profiles if isinstance(profiles, list) else []
+
+
+def _resolve_profile(ref: str) -> dict:
+    """Find a browser profile by id or name (case-insensitive)."""
+    ref_l = ref.lower()
+    for p in _list_profiles():
+        if str(p.get("id")) == ref or str(p.get("name", "")).lower() == ref_l:
+            return p
+    typer.secho(f"No browser profile matching {ref!r}. Run `como browser profile ls`.", fg="red", err=True)
+    raise typer.Exit(code=1)
+
+
+def _profile_names() -> dict[str, str]:
+    """``{profile_id: name}`` for rendering an agent's linked profile by name."""
+    return {str(p["id"]): p["name"] for p in _list_profiles()}
+
+
 @app.command("template")
 def template() -> None:
     """Print a starter agent definition (JSON) to stdout. Redirect to a file,
@@ -104,11 +131,18 @@ def ls(json_out: bool = typer.Option(False, "--json", help="Raw JSON instead of 
     if not agents:
         typer.secho("No agents yet. Scaffold one: `como agents template > a.json`.", fg="yellow")
         return
+    # Resolve linked profile ids to names (one extra call) only if any agent has one.
+    names = _profile_names() if any(a.get("browser_profile_id") for a in agents) else {}
     name_w = max((len(str(a.get("name", ""))) for a in agents), default=4)
-    typer.echo(f"{'NAME'.ljust(name_w)}  {'SLUG'.ljust(24)}  OUTPUT FIELDS")
+    typer.echo(f"{'NAME'.ljust(name_w)}  {'SLUG'.ljust(24)}  {'PROFILE'.ljust(16)}  OUTPUT FIELDS")
     for a in agents:
         fields = ", ".join((a.get("output_fields") or {}).keys()) or "—"
-        typer.echo(f"{str(a.get('name','')).ljust(name_w)}  {str(a.get('slug','')).ljust(24)}  {fields}")
+        pid = a.get("browser_profile_id")
+        profile = names.get(str(pid), str(pid)) if pid else "—"
+        typer.echo(
+            f"{str(a.get('name','')).ljust(name_w)}  {str(a.get('slug','')).ljust(24)}  "
+            f"{profile.ljust(16)}  {fields}"
+        )
 
 
 @app.command("get")
@@ -132,6 +166,31 @@ def create(
     typer.echo(json.dumps(agent, indent=2))
     if isinstance(agent, dict):
         typer.secho(f"\nUploaded agent {agent.get('name')!r} (slug: {agent.get('slug')}).", fg="green")
+
+
+@app.command("link")
+def link(
+    ref: str = typer.Argument(..., help="Agent name, slug, or id."),
+    profile: str = typer.Option(..., "--profile", "-p", help="Browser profile name or id to run from."),
+) -> None:
+    """Link an agent to a browser profile — its runs start from that profile's
+    logged-in snapshot, ephemerally (the run never writes back to the profile).
+    Needs `workspace:manage`."""
+    agent = _resolve_agent(ref)
+    prof = _resolve_profile(profile)
+    updated = _req("PATCH", f"{_BASE}/agents/{agent['id']}", {"browser_profile_id": prof["id"]})
+    typer.echo(json.dumps(updated, indent=2))
+    typer.secho(f"\nLinked agent {agent['name']!r} to profile {prof['name']!r}.", fg="green")
+
+
+@app.command("unlink")
+def unlink(ref: str = typer.Argument(..., help="Agent name, slug, or id.")) -> None:
+    """Unlink an agent's browser profile — its runs go back to an anonymous
+    browser. Needs `workspace:manage`."""
+    agent = _resolve_agent(ref)
+    updated = _req("PATCH", f"{_BASE}/agents/{agent['id']}", {"browser_profile_id": None})
+    typer.echo(json.dumps(updated, indent=2))
+    typer.secho(f"\nUnlinked agent {agent['name']!r} — runs use an anonymous browser.", fg="green")
 
 
 @app.command("rm")
