@@ -37,16 +37,21 @@ underlying provider profile id never reaches you — you reference a profile by 
   ```
   - **A usable profile exists** (covers the site, `status: ready`) → use it in Step 2 with
     `--profile <name>`.
-  - **No profile / not logged in** → create one and **have the human log in before you do
-    anything else**:
+  - **No profile / not logged in** → create one and **have the human sign in before you do
+    anything else**. As an agent, use the **non-blocking split** (the bare `login` blocks on a
+    terminal prompt — that form is for a human at a shell):
     ```bash
     como browser profile create "Bookface" --description "YC bookface session"
-    como browser profile login "Bookface"
-    #   → prints a live_url; the human opens it, signs in, presses Enter to save.
+    como browser profile login "Bookface" --open
+    #   → prints {browser_id, live_url, expires_at}. Relay the live_url to the user:
+    #     "Open this, sign in, and tell me when you're done (the link expires at <expires_at>)."
+    # ── yield: wait for the user to say "done" (a turn boundary, NOT a blocked process) ──
+    como browser profile login "Bookface" --finish    # persists the session + marks it ready
     ```
-    `login` is human-in-the-loop by design — **stop and ask the user to complete it**, then
-    continue. Status is observed, never guessed: `new` → (human login) → `ready`, and only an
-    agent hitting a wall flips it to `needs_login` (tell the user to re-run `profile login`).
+    The live browser **auto-stops at `expires_at`**, so a walked-away login never runs forever;
+    if it lapses, `--finish` returns an error — just `--open` again. `como browser profile cancel
+    "Bookface"` aborts an in-progress login. Status is observed, never guessed: `new` → (human
+    login) → `ready`; only an agent hitting a wall flips it to `needs_login`.
 
 ## Step 2 — get the browser from como, then drive it with browser-harness
 
