@@ -80,9 +80,26 @@ iterating. Do **not** do browser steps as a single `como run` LLM call. Use `com
 for cheap in-code reasoning *within* the agent (e.g. "given this page text, extract the rows
 as JSON"). See [workflows.md](workflows.md) for how this composes into local / cloud / parallel runs.
 
-## HARD RULE — never automate LinkedIn with a browser
+## LinkedIn — advise, don't automate it logged-in
 
-Do **not** drive LinkedIn through `browser-harness` / a cloud browser / a profile — it is a
-**ban risk** for the account. `como browser profile login` **refuses** LinkedIn login targets.
-For **all** LinkedIn data — companies, people, jobs, posts, profiles — use **`como linkedin`**
-(the ghost research API), which needs no LinkedIn account of your own. See [cli.md](cli.md).
+LinkedIn is **not blocked**. The risk is specific: automating LinkedIn from a profile that is
+**signed in** to LinkedIn is a high ban risk for *that account*. Automating LinkedIn while
+**signed out** is fine — there's no account to ban. So when a profile holds LinkedIn cookies
+(`has_linkedin` true / `linkedin.com` in its cookie domains), **tell the user**: *"avoid using
+this profile for LinkedIn automation — if it's logged into LinkedIn there's a high chance the
+account gets banned."* Don't refuse the work; advise. For LinkedIn **data** (companies, people,
+jobs, posts), prefer **`como linkedin`** (the ghost research API) — no account, no ban risk.
+See [cli.md](cli.md).
+
+## Cookies are a hint, not proof of a login
+
+`cookie_domains` / `has_linkedin` is **best-effort**: a domain can hold a cookie after a single
+visit, so it does **not** mean the profile is logged into that site, and it lags (Browser Use
+populates it asynchronously). **Never gate a decision on it.** The real test is using the profile:
+
+- A profile's `status` reflects the human's word + the agent's observation, never cookies: a
+  human login makes it `ready`; an agent that hits a login wall reports it back as `needs_login`.
+- If the user told you a profile is logged in but you hit a login wall (or the page looks signed
+  out), **yield back to the user**: *"You said this is logged into &lt;site&gt;, but it looks
+  signed out — can you re-run `como browser profile login`?"* Don't silently fail, and don't
+  trust the cookie list over what you actually observe.

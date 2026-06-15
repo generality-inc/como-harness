@@ -24,8 +24,9 @@ A **profile** is a persistent identity (cookies/localStorage). Log in once
 ``como browser create --profile <name>``. The agent never sees the underlying
 provider profile id — it references a profile by name or id.
 
-LinkedIn is **never** automated through here (ban risk). For all LinkedIn data
-use ``como linkedin`` (the ghost API).
+LinkedIn isn't blocked, but **avoid automating a LinkedIn-logged-in profile** — it's
+a high ban risk for that account (anonymous LinkedIn automation is fine). For LinkedIn
+data, prefer ``como linkedin`` (the ghost API) — no account, no ban risk.
 """
 
 from __future__ import annotations
@@ -142,7 +143,9 @@ def profile_ls(
     for r in table:
         typer.echo(_fmt_row(r, widths))
         if next((p for p in rows if str(p["id"]) == r[-1] and p.get("has_linkedin")), None):
-            typer.secho("    ⚠ holds LinkedIn cookies — do not automate LinkedIn (ban risk).", fg="yellow")
+            typer.secho(
+                "    ⚠ has LinkedIn cookies — avoid logged-in LinkedIn automation (ban risk).", fg="yellow"
+            )
 
 
 @profile_app.command("create")
@@ -195,8 +198,9 @@ def profile_login(
 
     Prints a live view URL — open it, go to whatever site you want, sign in, then
     press Enter here to save the session into the profile. No destination is
-    required (``--login-url`` is just an optional starting page). LinkedIn login
-    targets are refused (ban risk).
+    required (``--login-url`` is just an optional starting page). You *can* log into
+    LinkedIn, but avoid then automating that profile — it's a high ban risk for the
+    account (anonymous LinkedIn automation is fine).
     """
     base, headers = _client()
     # 1) Resolve the profile id (accept a name).
@@ -246,4 +250,8 @@ def profile_login(
     p = done.json()
     typer.secho(f"\nSaved. Profile {p['name']!r} is now: {p['status']}.", fg="green")
     if p.get("has_linkedin"):
-        typer.secho("⚠ This profile holds LinkedIn cookies — do not automate LinkedIn (ban risk).", fg="yellow")
+        typer.secho(
+            "⚠ This profile has LinkedIn cookies — avoid using it for LinkedIn automation "
+            "(high ban risk if it's logged in).",
+            fg="yellow",
+        )
