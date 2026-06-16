@@ -71,15 +71,25 @@ command -v browser-harness
 > a separate, later step.)
 
 ## Keeping `como` current
-The CLI and the skill are both the editable clone, so updating is one pull:
+The CLI **auto-updates**: on a throttled cadence (once a day) `como` checks its clone's remote
+and, if it's behind, prints a one-line notice and **fast-forward pulls** for you — the new code
+applies on your next run, and the symlinked skill picks up the new instructions. Force it any
+time with:
 
 ```bash
-cd <your como-harness clone> && git pull
+como update
 ```
 
-The next `como` run uses the new code, and the symlinked skill picks up the new instructions.
-Re-run `uv tool install -e ./sdk` only if a pull changed dependencies. There's no self-update
-banner — pull when told to, or when a command errors with a schema/version mismatch.
+It's fail-silent (a flaky network or local changes never break a command) and writes only to
+stderr. Re-run `uv tool install -e ./sdk` only if an update changed dependencies. **Disable the
+auto-check** (e.g. for deterministic CI / cloud-runner environments) with `COMO_NO_UPDATE=1`.
+
+> **Already installed before auto-update existed?** Bootstrap once with a manual pull, or paste
+> this to your coding agent:
+>
+> > Update my `como` CLI: find the `como-harness` git clone (`uv tool list`, or search my home
+> > dir for a `como-harness` checkout), `cd` into it, run `git pull`, then `uv tool install -e
+> > ./sdk`. Confirm with `como --version`.
 
 ## Troubleshooting
 - **`como: command not found`** → `uv tool update-shell`, restart the shell.

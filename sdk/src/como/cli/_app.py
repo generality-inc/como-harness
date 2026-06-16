@@ -69,6 +69,12 @@ def _root(
     if version:
         typer.echo(f"como {__version__}")
         raise typer.Exit()
+    # Throttled best-effort auto-update (notify + fast-forward pull). Never runs
+    # for `como update` itself, and is a no-op under COMO_NO_UPDATE (the runner).
+    if ctx.invoked_subcommand != "update":
+        from .._autoupdate import maybe_autoupdate
+
+        maybe_autoupdate()
 
 
 # ---- `como linkedin` — the ghost LinkedIn research API -----------------------
@@ -114,3 +120,10 @@ app.command(
 app.command("claude", context_settings=_RUN_CTX, help="Run Claude Code routed through the como LLM gateway.")(
     _run_cli.claude
 )
+
+
+@app.command("update", help="Update the como CLI to the latest (fast-forward pull on the editable clone).")
+def _update() -> None:
+    from .._autoupdate import force_update
+
+    raise typer.Exit(force_update())
