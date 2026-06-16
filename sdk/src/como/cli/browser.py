@@ -225,6 +225,36 @@ def _linkedin_warn(p: dict) -> None:
         )
 
 
+def _has_local_gui() -> bool:
+    """True when this machine plausibly has a browser we can open (false on a
+    headless agent/server). Mirrors browser-harness's check."""
+    import os
+    import platform
+
+    system = platform.system()
+    if system in ("Darwin", "Windows"):
+        return True
+    if system == "Linux":
+        return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+    return False
+
+
+def _auto_open_live(url: str | None) -> None:
+    """Open the live view in the local browser when a GUI is present, so a
+    co-located human can watch / sign in; a no-op on a headless agent. Mirrors
+    browser-harness `start_remote_daemon`. Notes go to stderr (stdout stays clean
+    for `--open`'s JSON)."""
+    import webbrowser
+
+    if not url or not _has_local_gui():
+        return
+    try:
+        webbrowser.open(url, new=2)
+        typer.secho("(opened the live view in your browser)", fg="green", err=True)
+    except Exception as exc:
+        typer.secho(f"(couldn't auto-open the live view: {exc} — open the URL above)", fg="yellow", err=True)
+
+
 @profile_app.command("login")
 def profile_login(
     profile: str = typer.Argument(..., help="Profile name or id to log into."),
@@ -275,18 +305,23 @@ def profile_login(
         what="Couldn't open login browser",
     )
 
-    # --open: hand the live_url to the caller (agent) and exit — no blocking wait.
+    # --open: hand the session to the caller (agent) and exit — no blocking wait.
+    # Auto-open the live view locally if a human's here; drive it to the login page
+    # via browser-harness with BU_CDP_URL=<cdp_url> (the browser starts blank).
     if open_only:
-        typer.echo(json.dumps({k: session.get(k) for k in ("browser_id", "live_url", "login_url", "expires_at")}))
+        _auto_open_live(session.get("live_url"))
+        keys = ("browser_id", "cdp_url", "live_url", "login_url", "expires_at")
+        typer.echo(json.dumps({k: session.get(k) for k in keys}))
         return
 
-    # Interactive: show the live view, block until the human is done, then finish.
+    # Interactive: show the live view (auto-open it), block until done, then finish.
     typer.secho("\nOpen this live view, go to the site you want, and sign in:", fg="green", bold=True)
     typer.echo(f"  Live view: {session['live_url']}")
     if session.get("login_url"):
-        typer.echo(f"  Starting page: {session['login_url']}")
+        typer.echo(f"  Starting page (navigate here yourself): {session['login_url']}")
     if session.get("expires_at"):
         typer.echo(f"  Expires: {session['expires_at']}")
+    _auto_open_live(session.get("live_url"))
     typer.echo("\nWhen you've finished logging in, press Enter to save the session…")
     input()
     p = _post_profile(base, headers, f"/v1/browser/profile/{pid}/login/complete", what="Couldn't finalize login")

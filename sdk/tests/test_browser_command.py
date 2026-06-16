@@ -43,12 +43,21 @@ _PROFILES = [{"id": "p1", "name": "Bookface", "status": "new"}]
 @respx.mock
 def test_profile_login_open_is_non_blocking(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     """`--open` resolves the profile, opens the browser, prints the session JSON
-    (incl. expires_at), and exits — it must NOT block on input or call complete."""
+    (incl. cdp_url + expires_at), auto-opens the live view locally, and exits — it
+    must NOT block on input or call complete."""
     _env(monkeypatch, tmp_path)
+    opened_urls: list[str] = []
+    monkeypatch.setattr("webbrowser.open", lambda url, *a, **k: opened_urls.append(url) or True)
     respx.get("http://api.test/v1/browser/profiles").mock(return_value=httpx.Response(200, json=_PROFILES))
     opened = respx.post("http://api.test/v1/browser/profile/p1/login").mock(
         return_value=httpx.Response(
-            200, json={"browser_id": "b1", "live_url": "https://live/1", "expires_at": "2026-06-15T05:00:00+00:00"}
+            200,
+            json={
+                "browser_id": "b1",
+                "cdp_url": "https://b1.cdp.browser-use.com",
+                "live_url": "https://live/1",
+                "expires_at": "2026-06-15T05:00:00+00:00",
+            },
         )
     )
     completed = respx.post("http://api.test/v1/browser/profile/p1/login/complete")
@@ -58,8 +67,9 @@ def test_profile_login_open_is_non_blocking(monkeypatch: pytest.MonkeyPatch, tmp
     assert result.exit_code == 0, result.output
     assert opened.called
     assert not completed.called  # --open never finalizes
-    assert "https://live/1" in result.output
+    assert "https://b1.cdp.browser-use.com" in result.output  # cdp drive handle in the JSON
     assert "expires_at" in result.output
+    assert opened_urls == ["https://live/1"]  # live view auto-opened locally
 
 
 @respx.mock

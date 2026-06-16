@@ -42,9 +42,15 @@ underlying provider profile id never reaches you — you reference a profile by 
     terminal prompt — that form is for a human at a shell):
     ```bash
     como browser profile create "Bookface" --description "YC bookface session"
-    como browser profile login "Bookface" --open
-    #   → prints {browser_id, live_url, expires_at}. Relay the live_url to the user:
-    #     "Open this, sign in, and tell me when you're done (the link expires at <expires_at>)."
+    S=$(como browser profile login "Bookface" --open)
+    #   → prints {browser_id, cdp_url, live_url, expires_at}, and auto-opens the live view
+    #     locally when a GUI is present (else relay the live_url to the user).
+    # The browser starts BLANK (Browser Use can't open it on a URL) — YOU drive it to the
+    # sign-in page via browser-harness, then hand it to the human:
+    BU_CDP_URL=$(echo "$S" | jq -r .cdp_url) browser-harness <<'PY'
+    new_tab("https://bookface.ycombinator.com"); wait_for_load()
+    PY
+    #   → "Sign in in the live view and tell me when you're done (expires <expires_at>)."
     # ── yield: wait for the user to say "done" (a turn boundary, NOT a blocked process) ──
     como browser profile login "Bookface" --finish    # persists the session + marks it ready
     ```
