@@ -35,3 +35,78 @@ def test_browser_stop(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None
     result = CliRunner().invoke(_app.app, ["browser", "stop", "bu_1"])
     assert result.exit_code == 0, result.output
     assert route.called
+
+
+_PROFILES = [{"id": "p1", "name": "Bookface", "status": "new"}]
+
+
+@respx.mock
+def test_profile_login_open_is_non_blocking(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    """`--open` resolves the profile, opens the browser, prints the session JSON
+    (incl. cdp_url + expires_at), auto-opens the live view locally, and exits — it
+    must NOT block on input or call complete."""
+    _env(monkeypatch, tmp_path)
+    opened_urls: list[str] = []
+    monkeypatch.setattr("webbrowser.open", lambda url, *a, **k: opened_urls.append(url) or True)
+    respx.get("http://api.test/v1/browser/profiles").mock(return_value=httpx.Response(200, json=_PROFILES))
+    opened = respx.post("http://api.test/v1/browser/profile/p1/login").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "browser_id": "b1",
+                "cdp_url": "https://b1.cdp.browser-use.com",
+                "live_url": "https://live/1",
+                "expires_at": "2026-06-15T05:00:00+00:00",
+            },
+        )
+    )
+    completed = respx.post("http://api.test/v1/browser/profile/p1/login/complete")
+
+    result = CliRunner().invoke(_app.app, ["browser", "profile", "login", "Bookface", "--open"])
+
+    assert result.exit_code == 0, result.output
+    assert opened.called
+    assert not completed.called  # --open never finalizes
+    assert "https://b1.cdp.browser-use.com" in result.output  # cdp drive handle in the JSON
+    assert "expires_at" in result.output
+    assert opened_urls == ["https://live/1"]  # live view auto-opened locally
+
+
+@respx.mock
+def test_profile_login_finish_completes(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    respx.get("http://api.test/v1/browser/profiles").mock(return_value=httpx.Response(200, json=_PROFILES))
+    opened = respx.post("http://api.test/v1/browser/profile/p1/login")
+    completed = respx.post("http://api.test/v1/browser/profile/p1/login/complete").mock(
+        return_value=httpx.Response(200, json={"id": "p1", "name": "Bookface", "status": "ready"})
+    )
+
+    result = CliRunner().invoke(_app.app, ["browser", "profile", "login", "Bookface", "--finish"])
+
+    assert result.exit_code == 0, result.output
+    assert completed.called
+    assert not opened.called  # --finish never opens a new browser
+    assert "Saved" in result.output
+
+
+@respx.mock
+def test_profile_login_open_and_finish_are_exclusive(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    result = CliRunner().invoke(_app.app, ["browser", "profile", "login", "Bookface", "--open", "--finish"])
+    assert result.exit_code == 1
+    assert "not both" in result.output
+
+
+@respx.mock
+def test_profile_cancel(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    respx.get("http://api.test/v1/browser/profiles").mock(return_value=httpx.Response(200, json=_PROFILES))
+    cancelled = respx.post("http://api.test/v1/browser/profile/p1/login/cancel").mock(
+        return_value=httpx.Response(200, json={"id": "p1", "name": "Bookface", "status": "new"})
+    )
+
+    result = CliRunner().invoke(_app.app, ["browser", "profile", "cancel", "Bookface"])
+
+    assert result.exit_code == 0, result.output
+    assert cancelled.called
+    assert "Cancelled" in result.output

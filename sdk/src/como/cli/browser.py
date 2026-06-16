@@ -24,8 +24,9 @@ A **profile** is a persistent identity (cookies/localStorage). Log in once
 ``como browser create --profile <name>``. The agent never sees the underlying
 provider profile id — it references a profile by name or id.
 
-LinkedIn is **never** automated through here (ban risk). For all LinkedIn data
-use ``como linkedin`` (the ghost API).
+LinkedIn isn't blocked, but **avoid automating a LinkedIn-logged-in profile** — it's
+a high ban risk for that account (anonymous LinkedIn automation is fine). For LinkedIn
+data, prefer ``como linkedin`` (the ghost API) — no account, no ban risk.
 """
 
 from __future__ import annotations
@@ -142,7 +143,9 @@ def profile_ls(
     for r in table:
         typer.echo(_fmt_row(r, widths))
         if next((p for p in rows if str(p["id"]) == r[-1] and p.get("has_linkedin")), None):
-            typer.secho("    ⚠ holds LinkedIn cookies — do not automate LinkedIn (ban risk).", fg="yellow")
+            typer.secho(
+                "    ⚠ has LinkedIn cookies — avoid logged-in LinkedIn automation (ban risk).", fg="yellow"
+            )
 
 
 @profile_app.command("create")
@@ -184,22 +187,8 @@ def profile_rm(
     typer.secho("Deleted.", fg="green")
 
 
-@profile_app.command("login")
-def profile_login(
-    profile: str = typer.Argument(..., help="Profile name or id to log into."),
-    login_url: str | None = typer.Option(
-        None, "--login-url", help="Optional starting page, e.g. https://bookface.ycombinator.com"
-    ),
-) -> None:
-    """Open the profile's browser so a human can log in once.
-
-    Prints a live view URL — open it, go to whatever site you want, sign in, then
-    press Enter here to save the session into the profile. No destination is
-    required (``--login-url`` is just an optional starting page). LinkedIn login
-    targets are refused (ban risk).
-    """
-    base, headers = _client()
-    # 1) Resolve the profile id (accept a name).
+def _resolve_profile_id(base: str, headers: dict[str, str], profile: str) -> str:
+    """Resolve a profile name-or-id to its id."""
     try:
         with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
             lst = c.get(f"{base}/v1/browser/profiles", headers=headers)
@@ -211,39 +200,141 @@ def profile_login(
     if match is None:
         typer.secho(f"No profile named or id'd {profile!r}. See `como browser profile ls`.", fg="red", err=True)
         raise typer.Exit(code=1)
-    pid = match["id"]
+    return str(match["id"])
 
-    # 2) Open the login browser.
-    body = {"login_url": login_url} if login_url else {}
+
+def _post_profile(base: str, headers: dict[str, str], path: str, *, body: dict | None = None, what: str) -> dict:
+    """POST to a profile endpoint, surfacing the backend's error detail on failure."""
     try:
         with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            resp = c.post(f"{base}/v1/browser/profile/{pid}/login", headers=headers, json=body)
+            resp = c.post(f"{base}{path}", headers=headers, json=body or {})
             resp.raise_for_status()
     except httpx.HTTPError as exc:
         detail = exc.response.text if isinstance(exc, httpx.HTTPStatusError) else str(exc)
-        typer.secho(f"Couldn't open login browser: {detail}", fg="red", err=True)
+        typer.secho(f"{what}: {detail}", fg="red", err=True)
         raise typer.Exit(code=1) from exc
-    session = resp.json()
+    return resp.json()
+
+
+def _linkedin_warn(p: dict) -> None:
+    if p.get("has_linkedin"):
+        typer.secho(
+            "⚠ This profile has LinkedIn cookies — avoid using it for LinkedIn automation "
+            "(high ban risk if it's logged in).",
+            fg="yellow",
+        )
+
+
+def _has_local_gui() -> bool:
+    """True when this machine plausibly has a browser we can open (false on a
+    headless agent/server). Mirrors browser-harness's check."""
+    import os
+    import platform
+
+    system = platform.system()
+    if system in ("Darwin", "Windows"):
+        return True
+    if system == "Linux":
+        return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+    return False
+
+
+def _auto_open_live(url: str | None) -> None:
+    """Open the live view in the local browser when a GUI is present, so a
+    co-located human can watch / sign in; a no-op on a headless agent. Mirrors
+    browser-harness `start_remote_daemon`. Notes go to stderr (stdout stays clean
+    for `--open`'s JSON)."""
+    import webbrowser
+
+    if not url or not _has_local_gui():
+        return
+    try:
+        webbrowser.open(url, new=2)
+        typer.secho("(opened the live view in your browser)", fg="green", err=True)
+    except Exception as exc:
+        typer.secho(f"(couldn't auto-open the live view: {exc} — open the URL above)", fg="yellow", err=True)
+
+
+@profile_app.command("login")
+def profile_login(
+    profile: str = typer.Argument(..., help="Profile name or id to log into."),
+    login_url: str | None = typer.Option(
+        None, "--login-url", help="Optional starting page, e.g. https://bookface.ycombinator.com"
+    ),
+    open_only: bool = typer.Option(
+        False,
+        "--open",
+        help="Open the login browser, print {browser_id, live_url, expires_at} as JSON, and exit "
+        "(for agents — relay the live_url to a human, then call --finish).",
+    ),
+    finish: bool = typer.Option(
+        False, "--finish", help="Finalize a login a human has already completed (persist + mark ready), then exit."
+    ),
+) -> None:
+    """Log a human into the profile's browser once; agents reuse it afterwards.
+
+    Default (interactive): open a live view, press Enter when signed in, save. For
+    an **agent**, split it — ``--open`` returns the live view URL and exits so you
+    can hand it to a human ("please log in and tell me when done"), then ``--finish``
+    saves once they confirm. The live browser auto-stops at ``expires_at`` (and
+    ``como browser profile cancel`` tears it down early), so an abandoned login
+    never runs forever.
+
+    You *can* log into LinkedIn, but avoid then automating that profile — high ban
+    risk for the account (anonymous LinkedIn automation is fine).
+    """
+    if open_only and finish:
+        typer.secho("Use either --open or --finish, not both.", fg="red", err=True)
+        raise typer.Exit(code=1)
+    base, headers = _client()
+    pid = _resolve_profile_id(base, headers, profile)
+
+    # --finish: a human already signed in via a prior --open; persist it.
+    if finish:
+        p = _post_profile(base, headers, f"/v1/browser/profile/{pid}/login/complete", what="Couldn't finalize login")
+        typer.secho(f"Saved. Profile {p['name']!r} is now: {p['status']}.", fg="green")
+        _linkedin_warn(p)
+        return
+
+    # Open (or reconnect to) the live login browser.
+    session = _post_profile(
+        base,
+        headers,
+        f"/v1/browser/profile/{pid}/login",
+        body={"login_url": login_url} if login_url else {},
+        what="Couldn't open login browser",
+    )
+
+    # --open: hand the session to the caller (agent) and exit — no blocking wait.
+    # Auto-open the live view locally if a human's here; drive it to the login page
+    # via browser-harness with BU_CDP_URL=<cdp_url> (the browser starts blank).
+    if open_only:
+        _auto_open_live(session.get("live_url"))
+        keys = ("browser_id", "cdp_url", "live_url", "login_url", "expires_at")
+        typer.echo(json.dumps({k: session.get(k) for k in keys}))
+        return
+
+    # Interactive: show the live view (auto-open it), block until done, then finish.
     typer.secho("\nOpen this live view, go to the site you want, and sign in:", fg="green", bold=True)
     typer.echo(f"  Live view: {session['live_url']}")
     if session.get("login_url"):
-        typer.echo(f"  Starting page: {session['login_url']}")
+        typer.echo(f"  Starting page (navigate here yourself): {session['login_url']}")
+    if session.get("expires_at"):
+        typer.echo(f"  Expires: {session['expires_at']}")
+    _auto_open_live(session.get("live_url"))
     typer.echo("\nWhen you've finished logging in, press Enter to save the session…")
     input()
-
-    # 3) Complete — stop the browser, persist + refresh the profile.
-    try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            done = c.post(
-                f"{base}/v1/browser/profile/{pid}/login/complete",
-                headers=headers,
-                json={"browser_id": session["browser_id"]},
-            )
-            done.raise_for_status()
-    except httpx.HTTPError as exc:
-        typer.secho(f"Couldn't finalize login: {exc}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    p = done.json()
+    p = _post_profile(base, headers, f"/v1/browser/profile/{pid}/login/complete", what="Couldn't finalize login")
     typer.secho(f"\nSaved. Profile {p['name']!r} is now: {p['status']}.", fg="green")
-    if p.get("has_linkedin"):
-        typer.secho("⚠ This profile holds LinkedIn cookies — do not automate LinkedIn (ban risk).", fg="yellow")
+    _linkedin_warn(p)
+
+
+@profile_app.command("cancel")
+def profile_cancel(
+    profile: str = typer.Argument(..., help="Profile name or id whose in-progress login to cancel."),
+) -> None:
+    """Abort an in-progress login — tear down the live browser without saving."""
+    base, headers = _client()
+    pid = _resolve_profile_id(base, headers, profile)
+    _post_profile(base, headers, f"/v1/browser/profile/{pid}/login/cancel", what="Couldn't cancel login")
+    typer.secho("Cancelled — login browser torn down (nothing saved).", fg="green")
