@@ -14,7 +14,9 @@ class _GroupAdminProfile(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     headline: str | None = None
-    picture: str | None = None
+    # Upstream returns either a media object ({url,width,height}) or a bare URL
+    # string — union both so a media object never raises (it crashed group search).
+    picture: MediaImage | str | None = None
 
 
 class _GroupAdmins(BaseModel):
@@ -53,7 +55,9 @@ class GroupSearchHit(BaseModel):
     name: str | None = None
     members: str | None = None
     summary: str | None = None
-    picture: str | None = None
+    # media object ({url,width,height}) or bare URL — union both (was str-only,
+    # which raised on the media object and crashed group search).
+    picture: MediaImage | str | None = None
     primary_actions: list[_GroupPrimaryAction] | None = None
 
 

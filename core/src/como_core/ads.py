@@ -80,5 +80,5 @@ class Ad(BaseModel):
 
 
 class AdSearchResult(BaseModel):
-    elements: list[dict] = []
+    elements: list[Ad] = []
     pagination: Pagination | None = None
