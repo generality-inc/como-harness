@@ -19,6 +19,20 @@ The agent will install the CLI, symlink the skill into your agent, install the b
 CLI, and walk you through `como auth login` (one browser approval). Manual steps are in
 [install.md](install.md).
 
+## Updating
+
+To update, paste into Claude Code (or Codex):
+
+```text
+Update my `como` CLI to the latest. Find the como-harness git clone — try `uv tool list`,
+otherwise search my home directory for a `como-harness` checkout. cd into it, run `git pull`,
+then `uv tool install -e ./sdk`. Confirm it worked with `como --version`.
+```
+
+**You only need that once.** After updating, `como` keeps itself current automatically — it
+checks daily and fast-forward pulls the latest (run `como update` to force it, or set
+`COMO_NO_UPDATE=1` to disable, e.g. for pinned/CI environments).
+
 ## Layout
 
 ```
