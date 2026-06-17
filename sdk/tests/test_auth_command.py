@@ -22,6 +22,7 @@ def test_login_persists_minted_key(monkeypatch: pytest.MonkeyPatch, tmp_path: ob
     monkeypatch.setattr(auth_cli.time, "sleep", lambda _s: None)  # don't actually wait
 
     base = "http://api.test"
+    monkeypatch.setenv("COMO_BASE_URL", base)  # backend is injected via env, not a flag
     respx.post(f"{base}/v1/cli/device-code").mock(
         return_value=httpx.Response(
             200,
@@ -50,14 +51,14 @@ def test_login_persists_minted_key(monkeypatch: pytest.MonkeyPatch, tmp_path: ob
         ),
     ]
 
-    result = CliRunner().invoke(auth_cli.app, ["login", "--base-url", base, "--no-browser"])
+    result = CliRunner().invoke(auth_cli.app, ["login", "--no-browser"])
     assert result.exit_code == 0, result.output
     assert "ABCD-2345" in result.output  # the one-time code is shown to the user
 
     creds = _config.load_credentials()
     assert creds is not None
     assert creds["api_key"] == "como_live_secretkey"
-    assert creds["base_url"] == base
+    assert "base_url" not in creds  # base URL is env-injected / prod-default, never persisted
     assert creds["workspace_id"] == "11111111-1111-1111-1111-111111111111"
     # The transport resolves this key for subsequent calls.
     assert _config.resolve_api_key(None) == "como_live_secretkey"

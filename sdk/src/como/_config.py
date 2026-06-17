@@ -9,7 +9,12 @@ DEFAULT_BASE_URL: Final[str] = "https://api.como.sh"
 DEFAULT_TIMEOUT: Final[float] = 30.0
 
 ENV_API_KEY: Final[str] = "COMO_API_KEY"
-ENV_BASE_URL: Final[str] = "COMO_API_BASE_URL"
+# The backend is injected via the environment (the cloud runner and internal dev
+# set it); everyone else — i.e. every customer — gets production by default.
+# There is deliberately no CLI flag for it. ``COMO_API_BASE_URL`` stays honored
+# as a legacy alias so already-deployed sandboxes / scripts keep working.
+ENV_BASE_URL: Final[str] = "COMO_BASE_URL"
+ENV_BASE_URL_LEGACY: Final[str] = "COMO_API_BASE_URL"
 
 
 def credentials_path() -> Path:
@@ -46,13 +51,16 @@ def resolve_api_key(explicit: str | None) -> str:
 
 
 def resolve_base_url(explicit: str | None) -> str:
-    """Resolve base URL in priority order: explicit → env → credentials file → default."""
+    """Resolve the API base URL: explicit (the SDK ``base_url=`` kwarg) →
+    ``COMO_BASE_URL`` → ``COMO_API_BASE_URL`` (legacy) → the production default.
+
+    Injected via the environment, not a CLI flag — customers always get
+    production; the cloud runner and internal dev set the env var to point
+    elsewhere."""
     if explicit:
         return explicit.rstrip("/")
-    env_value = os.environ.get(ENV_BASE_URL)
-    if env_value:
-        return env_value.rstrip("/")
-    creds = load_credentials()
-    if creds and creds.get("base_url"):
-        return str(creds["base_url"]).rstrip("/")
+    for var in (ENV_BASE_URL, ENV_BASE_URL_LEGACY):
+        env_value = os.environ.get(var)
+        if env_value:
+            return env_value.rstrip("/")
     return DEFAULT_BASE_URL.rstrip("/")

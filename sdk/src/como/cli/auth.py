@@ -54,14 +54,12 @@ def _save_credentials(payload: dict[str, Any]) -> Path:
 
 @app.command("login")
 def login(
-    base_url: str | None = typer.Option(
-        None, "--base-url", help="Como API base URL. Defaults to COMO_API_BASE_URL or the production URL."
-    ),
     label: str | None = typer.Option(None, "--label", help="Display name for this device."),
     no_browser: bool = typer.Option(False, "--no-browser", help="Don't auto-open the browser."),
 ) -> None:
     """Pair this machine with a Como workspace via the device-code flow."""
-    api_base = resolve_base_url(base_url)
+    # The backend is production by default; internal use sets COMO_BASE_URL.
+    api_base = resolve_base_url(None)
     device_label = label or _device_label()
 
     typer.echo(f"Starting login at {api_base} …")
@@ -106,7 +104,6 @@ def login(
                     "api_key": key,
                     "workspace_id": poll.get("workspace_id"),
                     "user_id": poll.get("user_id"),
-                    "base_url": api_base,
                     "device_label": device_label,
                 }
             )
@@ -135,7 +132,7 @@ def logout() -> None:
         return
 
     if creds is not None:
-        base_url = creds.get("base_url") or resolve_base_url(None)
+        base_url = resolve_base_url(None)
         api_key = creds.get("api_key")
         if api_key:
             try:
@@ -174,7 +171,7 @@ def whoami() -> None:
     if not creds:
         typer.secho("Not logged in. Run `como auth login`.", fg="yellow")
         raise typer.Exit(code=1)
-    base_url = creds.get("base_url") or resolve_base_url(None)
+    base_url = resolve_base_url(None)
     api_key = creds["api_key"]
     with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
         resp = client.get(

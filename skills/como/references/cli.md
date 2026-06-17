@@ -18,7 +18,7 @@ have an ID, or reading a shallow search hit and thinking it's the full record).
 
 ```bash
 export COMO_API_KEY=como_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     # required
-export COMO_API_BASE_URL=https://api.como.sh                      # optional; override for non-prod
+export COMO_BASE_URL=https://api.como.sh                      # optional; override for non-prod
 como --help                                                       # top-level help
 como linkedin --help                                              # all LinkedIn resources
 como linkedin <resource> --help                                   # resource help
@@ -245,7 +245,7 @@ The same surface is a typed, Pydantic-v2 client — sync and async.
 ```python
 from como import Como
 
-with Como() as client:                                  # reads COMO_API_KEY / COMO_API_BASE_URL
+with Como() as client:                                  # reads COMO_API_KEY / COMO_BASE_URL
     company = client.company.get(url="https://www.linkedin.com/company/openai")   # Company model (flat; .id, .name, ...)
     jobs = client.job.search(company_id=company.id, page=1)          # shallow hits
     for hit in jobs.elements:

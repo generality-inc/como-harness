@@ -21,7 +21,7 @@ packages/python/
 │   └── _index.json           # resource→file map, lists every como_path
 ├── src/como/
 │   ├── __init__.py           # public re-exports (curated, no leakage)
-│   ├── _config.py            # COMO_API_KEY, COMO_API_BASE_URL
+│   ├── _config.py            # COMO_API_KEY, COMO_BASE_URL
 │   ├── _params.py            # clean_params, require_one_of
 │   ├── _transport.py         # SyncTransport / AsyncTransport, error mapping
 │   ├── client.py             # Como / AsyncComo — attaches all resources

@@ -65,7 +65,7 @@ wheels = [
 [[package]]
 name = "como-core"
 version = "0.0.1"
-source = { editable = "../python-core" }
+source = { editable = "../core" }
 dependencies = [
     { name = "pydantic" },
 ]
@@ -100,7 +100,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "como-core", editable = "../python-core" },
+    { name = "como-core", editable = "../core" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2" },
     { name = "typer", specifier = ">=0.25.1" },

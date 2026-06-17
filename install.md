@@ -45,11 +45,11 @@ The symlink keeps the skill in sync with the repo — a `git pull` updates the i
 
 ## 3. Sign in
 ```bash
-como auth login --base-url https://api.como.sh
+como auth login
 ```
 This opens the user's browser to **app.como.sh**; they pick a workspace and click Approve. A
-scoped `como_live_` key is written to `~/.config/como/credentials.json` (0600) and the prod base
-URL is persisted. Every later `como` call picks the key up automatically.
+scoped `como_live_` key is written to `~/.config/como/credentials.json` (0600). Every later
+`como` call picks the key up automatically and talks to production.
 
 Verify:
 ```bash
@@ -94,6 +94,6 @@ auto-check** (e.g. for deterministic CI / cloud-runner environments) with `COMO_
 ## Troubleshooting
 - **`como: command not found`** → `uv tool update-shell`, restart the shell.
 - **`Missing API key`** → run `como auth login` (step 3), or export `COMO_API_KEY`.
-- **Sent to the wrong environment** (e.g. app-dev) → the saved `base_url` points at dev. Re-run
-  `como auth login --base-url https://api.como.sh`; the explicit base overwrites it. The login
-  page always follows whichever API base the CLI calls.
+- **Sent to the wrong environment** (e.g. app-dev) → `COMO_BASE_URL` is set in your shell. The
+  CLI talks to production by default; `unset COMO_BASE_URL` to restore it. The login page always
+  follows whichever API base the CLI calls.

@@ -26,7 +26,7 @@ The client reads two environment variables:
 | Variable              | Default                     | Description           |
 | --------------------- | --------------------------- | --------------------- |
 | `COMO_API_KEY`        | _required_                  | Bearer token          |
-| `COMO_API_BASE_URL`   | `https://api.como.sh`    | Override API base URL |
+| `COMO_BASE_URL`   | `https://api.como.sh`    | Override API base URL |
 
 Or pass them explicitly:
 

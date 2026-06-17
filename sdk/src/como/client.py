@@ -20,7 +20,7 @@ from .resources.service import AsyncServiceResource, ServiceResource
 class Como:
     """Synchronous Como client.
 
-    Reads `COMO_API_KEY` and `COMO_API_BASE_URL` from the environment if not provided.
+    Reads `COMO_API_KEY` and `COMO_BASE_URL` from the environment if not provided.
     """
 
     def __init__(
