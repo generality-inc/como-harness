@@ -43,7 +43,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"url": "string"}
+    "query": {"url": "string"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Requires one of: url, groupId."

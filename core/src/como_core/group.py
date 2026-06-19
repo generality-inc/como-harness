@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._common import BaseModel, MediaImage, Pagination
+from ._common import BaseModel, CostMixin, MediaImage, Pagination
 
 
 class _GroupCreatedAt(BaseModel):
@@ -25,7 +25,7 @@ class _GroupAdmins(BaseModel):
     profiles: list[_GroupAdminProfile] | None = None
 
 
-class Group(BaseModel):
+class Group(CostMixin):
     id: str | None = None
     linkedin_url: str | None = None
     name: str | None = None
@@ -61,6 +61,6 @@ class GroupSearchHit(BaseModel):
     primary_actions: list[_GroupPrimaryAction] | None = None
 
 
-class GroupSearchResult(BaseModel):
+class GroupSearchResult(CostMixin):
     elements: list[GroupSearchHit] = []
     pagination: Pagination | None = None

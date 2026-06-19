@@ -3,6 +3,7 @@ from __future__ import annotations
 import httpx
 import pytest
 import respx
+from como_core import Cost
 
 from como import AsyncComo, Como, ComoAuthError, ComoBadRequestError
 
@@ -41,6 +42,7 @@ def test_profile_get_unwraps_element_and_maps_camel_case():
                 "status": "ok",
                 "error": "",
                 "query": {"publicIdentifier": "kayla"},
+                "cost": {"amount": "0.060000", "currency": "USD"},
             },
         )
     )
@@ -51,6 +53,7 @@ def test_profile_get_unwraps_element_and_maps_camel_case():
     assert profile.connections_count == 500
     assert profile.location is not None and profile.location.linkedin_text == "San Francisco"
     assert profile.experience and profile.experience[0].company_name == "Acme"
+    assert profile.cost == Cost(amount="0.060000", currency="USD")
 
 
 @respx.mock
@@ -92,6 +95,7 @@ def test_profile_search_parses_pagination():
                     "paginationToken": "tok-1",
                 },
                 "status": "ok",
+                "cost": {"amount": "0.060000", "currency": "USD"},
             },
         )
     )
@@ -102,6 +106,7 @@ def test_profile_search_parses_pagination():
     assert result.pagination is not None
     assert result.pagination.total_pages == 3
     assert result.pagination.pagination_token == "tok-1"
+    assert result.cost.amount == "0.060000"
 
 
 @respx.mock

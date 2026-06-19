@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._common import BaseModel, LocationField, Pagination
+from ._common import BaseModel, CostMixin, LocationField, Pagination
 
 
 class ServiceSearchHit(BaseModel):
@@ -14,6 +14,6 @@ class ServiceSearchHit(BaseModel):
     hidden: bool | None = None
 
 
-class ServiceSearchResult(BaseModel):
+class ServiceSearchResult(CostMixin):
     elements: list[ServiceSearchHit] = []
     pagination: Pagination | None = None

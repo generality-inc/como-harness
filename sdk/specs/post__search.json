@@ -66,7 +66,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"}
+    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Profile and company filters return fewer results per entity; use dedicated profile-posts or company-posts endpoints for exhaustive extraction. Pagination token only when returned by previous response."

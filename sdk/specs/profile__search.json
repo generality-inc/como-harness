@@ -44,7 +44,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"search": "string", "companyId": "string", "location": "string", "geoId": "string", "page": "string"}
+    "query": {"search": "string", "companyId": "string", "location": "string", "geoId": "string", "page": "string"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Location text search may return unexpected results; use geo search endpoint for precise IDs. Pagination via page and paginationToken."

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._common import BaseModel
+from ._common import BaseModel, CostMixin
 
 
 class GeoMatch(BaseModel):
@@ -8,6 +8,6 @@ class GeoMatch(BaseModel):
     title: str | None = None
 
 
-class GeoSearchResult(BaseModel):
+class GeoSearchResult(CostMixin):
     id: str | None = None
     elements: list[GeoMatch] = []

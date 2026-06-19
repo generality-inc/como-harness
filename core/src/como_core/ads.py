@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ._common import BaseModel, Pagination
+from ._common import BaseModel, CostMixin, Pagination
 
 
 class _AdAdvertiser(BaseModel):
@@ -71,7 +71,7 @@ class _AdTargeting(BaseModel):
     parameters: list[_AdTargetingParameter] | None = None
 
 
-class Ad(BaseModel):
+class Ad(CostMixin):
     id: str | None = None
     variants: list[_AdVariant] | None = None
     about: _AdAbout | None = None
@@ -79,6 +79,6 @@ class Ad(BaseModel):
     targeting: _AdTargeting | None = None
 
 
-class AdSearchResult(BaseModel):
+class AdSearchResult(CostMixin):
     elements: list[Ad] = []
     pagination: Pagination | None = None

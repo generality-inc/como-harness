@@ -43,7 +43,8 @@
     "query": {
       "title": "string", "companyId": "string", "location": "string", "geoId": "string",
       "sortBy": "string", "workplaceType": "string", "postedLimit": "string", "page": "integer"
-    }
+    },
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "geoId overrides location text search. Multiple comma-separated values accepted for companyId, workplaceType, employmentType, experienceLevel, industryId, functionId."

@@ -48,7 +48,8 @@
       "previousElements": "integer", "pageSize": "integer", "paginationToken": "string|null"
     },
     "status": "string", "error": "string",
-    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"}
+    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Same upstream endpoint as profile__posts. Documented under both profile and post sections. Requires one of: profile, profileId, or profilePublicIdentifier."

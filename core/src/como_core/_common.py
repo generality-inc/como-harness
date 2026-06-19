@@ -26,6 +26,32 @@ class Pagination(BaseModel):
     pagination_token: str | None = None
 
 
+class Cost(BaseModel):
+    """What the caller is charged for one request — OUR price, margin included.
+
+    This is the marked-up amount billed to the customer's wallet, never the
+    upstream/vendor cost: the API computes it from the per-org price book and
+    stamps it onto the response after the upstream envelope is stripped. ``amount``
+    is a fixed-point USD string (6 dp, e.g. ``"0.060000"``) so it round-trips the
+    ledger's ``Decimal`` exactly without float drift.
+    """
+
+    amount: str
+    currency: str = "USD"
+
+
+class CostMixin(BaseModel):
+    """Mixin for top-level ghost responses that carry a request ``cost``.
+
+    Optional by design: ``cost`` is absent when the request wasn't metered (no
+    upstream cost, or the billing layer couldn't resolve the org). It is the only
+    pricing field a customer ever sees — see ``GhostService._shape``, which strips
+    every upstream pricing/identity field before this is added.
+    """
+
+    cost: Cost | None = None
+
+
 class DatePart(BaseModel):
     month: Any | None = None
     year: int | None = None

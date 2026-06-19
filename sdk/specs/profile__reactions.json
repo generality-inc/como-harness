@@ -32,7 +32,8 @@
       "previousElements": "integer", "pageSize": "integer", "paginationToken": "string"
     },
     "status": "string",
-    "error": "string"
+    "error": "string",
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Requires one of: profile, profileId. paginationToken required for pages > 1."

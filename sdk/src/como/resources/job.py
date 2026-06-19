@@ -3,7 +3,7 @@ from __future__ import annotations
 from como_core.job import Job, JobSearchResult
 
 from .._params import clean_params, require_one_of
-from ._base import AsyncResource, SyncResource
+from ._base import AsyncResource, SyncResource, lift_cost
 
 _PATH_GET = "/v1/ghost/job"
 _PATH_SEARCH = "/v1/ghost/job-search"
@@ -45,7 +45,7 @@ class JobResource(SyncResource):
     ) -> Job:
         params = _get_params(job_id=job_id, url=url)
         body = self._t.get(_PATH_GET, params=params)
-        return Job.model_validate(body.get("element") or {})
+        return lift_cost(Job.model_validate(body.get("element") or {}), body)
 
     def search(
         self,
@@ -96,7 +96,7 @@ class AsyncJobResource(AsyncResource):
     ) -> Job:
         params = _get_params(job_id=job_id, url=url)
         body = await self._t.get(_PATH_GET, params=params)
-        return Job.model_validate(body.get("element") or {})
+        return lift_cost(Job.model_validate(body.get("element") or {}), body)
 
     async def search(
         self,

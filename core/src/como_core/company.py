@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ._common import BaseModel, DatePart, LocationField, MediaImage, Pagination, ParsedLocation
+from ._common import BaseModel, CostMixin, DatePart, LocationField, MediaImage, Pagination, ParsedLocation
 
 
 class _Industry(BaseModel):
@@ -71,7 +71,7 @@ class _CrunchbaseFundingData(BaseModel):
     funding_rounds_url: str | None = None
 
 
-class Company(BaseModel):
+class Company(CostMixin):
     id: str | None = None
     universal_name: str | None = None
     name: str | None = None
@@ -111,6 +111,6 @@ class CompanySearchHit(BaseModel):
     universal_name: str | None = None
 
 
-class CompanySearchResult(BaseModel):
+class CompanySearchResult(CostMixin):
     elements: list[CompanySearchHit] = []
     pagination: Pagination | None = None

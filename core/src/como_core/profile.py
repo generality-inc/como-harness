@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._common import BaseModel, DatePart, LocationField, Pagination
+from ._common import BaseModel, CostMixin, DatePart, LocationField, Pagination
 from .post import Comment, Post, Reaction
 
 
@@ -72,7 +72,7 @@ class _Featured(BaseModel):
     subtitle: str | None = None
 
 
-class Profile(BaseModel):
+class Profile(CostMixin):
     id: str | None = None
     public_identifier: str | None = None
     first_name: str | None = None
@@ -113,21 +113,21 @@ class ProfileSearchHit(BaseModel):
     hidden: bool | None = None
 
 
-class ProfileSearchResult(BaseModel):
+class ProfileSearchResult(CostMixin):
     elements: list[ProfileSearchHit] = []
     pagination: Pagination | None = None
 
 
-class ProfilePostsResult(BaseModel):
+class ProfilePostsResult(CostMixin):
     elements: list[Post] = []
     pagination: Pagination | None = None
 
 
-class ProfileCommentsResult(BaseModel):
+class ProfileCommentsResult(CostMixin):
     elements: list[Comment] = []
     pagination: Pagination | None = None
 
 
-class ProfileReactionsResult(BaseModel):
+class ProfileReactionsResult(CostMixin):
     elements: list[Reaction] = []
     pagination: Pagination | None = None

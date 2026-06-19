@@ -63,7 +63,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"}
+    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Requires one of: profile, profileId, or profilePublicIdentifier. Upstream pagination totals may be inaccurate when postedLimit is applied. Use paginationToken if returned for accurate next-page."

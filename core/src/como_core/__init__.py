@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from ._common import (
     BaseModel,
+    Cost,
+    CostMixin,
     DatePart,
     LocationField,
     MediaImage,
@@ -35,6 +37,8 @@ __all__ = [
     "Certification",
     "Comment",
     "CommentReaction",
+    "Cost",
+    "CostMixin",
     "DatePart",
     "Education",
     "Experience",

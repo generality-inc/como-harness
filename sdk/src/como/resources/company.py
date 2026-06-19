@@ -4,7 +4,7 @@ from como_core.company import Company, CompanySearchResult
 from como_core.post import PostsResult
 
 from .._params import clean_params, require_one_of
-from ._base import AsyncResource, SyncResource
+from ._base import AsyncResource, SyncResource, lift_cost
 
 _PATH_GET = "/v1/ghost/company"
 _PATH_SEARCH = "/v1/ghost/company-search"
@@ -62,7 +62,7 @@ class CompanyResource(SyncResource):
     ) -> Company:
         params = _get_params(url=url, universal_name=universal_name, search=search)
         body = self._t.get(_PATH_GET, params=params)
-        return Company.model_validate(body.get("element") or {})
+        return lift_cost(Company.model_validate(body.get("element") or {}), body)
 
     def search(
         self,
@@ -119,7 +119,7 @@ class AsyncCompanyResource(AsyncResource):
     ) -> Company:
         params = _get_params(url=url, universal_name=universal_name, search=search)
         body = await self._t.get(_PATH_GET, params=params)
-        return Company.model_validate(body.get("element") or {})
+        return lift_cost(Company.model_validate(body.get("element") or {}), body)
 
     async def search(
         self,

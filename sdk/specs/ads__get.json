@@ -47,7 +47,8 @@
     "targeting": {
       "segments": [{"name": "string", "includes": ["string"], "excludes": ["string"]}],
       "parameters": [{"name": "string", "targeted": "boolean", "excluded": "boolean"}]
-    }
+    },
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Requires one of: adId, url. Returns 400 for invalid params, 404 if ad not found."

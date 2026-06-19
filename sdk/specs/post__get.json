@@ -46,7 +46,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"post": "string"}
+    "query": {"post": "string"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Returns 400 for invalid request parameters."

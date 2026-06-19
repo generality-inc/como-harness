@@ -27,7 +27,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"search": "string"}
+    "query": {"search": "string"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "All group fields except id are nullable."

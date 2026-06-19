@@ -56,7 +56,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"}
+    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Requires one of: company URL, companyId, or companyUniversalName. postedLimit is client-side and may affect pagination accuracy; scrapePostedLimit is server-side post-fetch."

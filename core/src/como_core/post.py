@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ._common import BaseModel, MediaImage, Pagination
+from ._common import BaseModel, CostMixin, MediaImage, Pagination
 
 
 class PostAuthor(BaseModel):
@@ -56,7 +56,7 @@ class _Engagement(BaseModel):
     reactions: list[_ReactionCount] | None = None
 
 
-class Post(BaseModel):
+class Post(CostMixin):
     id: str | None = None
     content: str | None = None
     linkedin_url: str | None = None
@@ -115,31 +115,31 @@ class CommentReaction(BaseModel):
     actor: PostActor | None = None
 
 
-class PostsResult(BaseModel):
+class PostsResult(CostMixin):
     elements: list[Post] = []
     pagination: Pagination | None = None
 
 
-class PostSearchResult(BaseModel):
+class PostSearchResult(CostMixin):
     elements: list[Post] = []
     pagination: Pagination | None = None
 
 
-class CommentsResult(BaseModel):
+class CommentsResult(CostMixin):
     elements: list[Comment] = []
     pagination: Pagination | None = None
 
 
-class ReactionsResult(BaseModel):
+class ReactionsResult(CostMixin):
     elements: list[Reaction] = []
     pagination: Pagination | None = None
 
 
-class CommentRepliesResult(BaseModel):
+class CommentRepliesResult(CostMixin):
     elements: list[Comment] = []
     pagination: Pagination | None = None
 
 
-class CommentReactionsResult(BaseModel):
+class CommentReactionsResult(CostMixin):
     elements: list[CommentReaction] = []
     pagination: Pagination | None = None

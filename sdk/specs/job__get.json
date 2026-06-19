@@ -46,7 +46,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"jobId": "string", "url": "string"}
+    "query": {"jobId": "string", "url": "string"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Requires one of: jobId, url. Returns 400 for invalid request parameters."

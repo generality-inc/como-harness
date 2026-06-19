@@ -70,7 +70,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"url": "string", "universalName": "string"}
+    "query": {"url": "string", "universalName": "string"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "At least one of (url, universalName, search) is required. search returns the most relevant match."

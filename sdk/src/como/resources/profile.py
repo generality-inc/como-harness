@@ -9,7 +9,7 @@ from como_core.profile import (
 )
 
 from .._params import clean_params, require_one_of
-from ._base import AsyncResource, SyncResource
+from ._base import AsyncResource, SyncResource, lift_cost
 
 _PATH_GET = "/v1/ghost/profile"
 _PATH_SEARCH = "/v1/ghost/profile-search"
@@ -122,7 +122,7 @@ class ProfileResource(SyncResource):
             include_about_profile=include_about_profile,
         )
         body = self._t.get(_PATH_GET, params=params)
-        return Profile.model_validate(body.get("element") or {})
+        return lift_cost(Profile.model_validate(body.get("element") or {}), body)
 
     def search(
         self,
@@ -237,7 +237,7 @@ class AsyncProfileResource(AsyncResource):
             include_about_profile=include_about_profile,
         )
         body = await self._t.get(_PATH_GET, params=params)
-        return Profile.model_validate(body.get("element") or {})
+        return lift_cost(Profile.model_validate(body.get("element") or {}), body)
 
     async def search(
         self,

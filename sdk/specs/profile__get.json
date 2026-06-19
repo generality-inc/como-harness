@@ -80,7 +80,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"url": "string", "publicIdentifier": "string", "profileId": "string"}
+    "query": {"url": "string", "publicIdentifier": "string", "profileId": "string"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "At least one of (url, publicIdentifier, profileId) is required. findEmail with SMTP verification incurs higher credit cost. main=true returns a cheaper, abbreviated profile."

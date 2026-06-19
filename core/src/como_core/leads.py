@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._common import BaseModel, DatePart, LocationField, Pagination
+from ._common import BaseModel, CostMixin, DatePart, LocationField, Pagination
 
 
 class _LeadTenure(BaseModel):
@@ -31,6 +31,6 @@ class Lead(BaseModel):
     current_positions: list[_LeadCurrentPosition] | None = None
 
 
-class LeadSearchResult(BaseModel):
+class LeadSearchResult(CostMixin):
     elements: list[Lead] = []
     pagination: Pagination | None = None

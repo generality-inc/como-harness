@@ -37,7 +37,8 @@
       "previousElements": "integer", "pageSize": "integer", "paginationToken": "string|null"
     },
     "status": "string",
-    "error": "string"
+    "error": "string",
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Returns 400 for invalid request parameters."

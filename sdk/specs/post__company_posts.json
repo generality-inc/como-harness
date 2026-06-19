@@ -48,7 +48,8 @@
       "previousElements": "integer", "pageSize": "integer", "paginationToken": "string"
     },
     "status": "string", "error": "string",
-    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"}
+    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Same upstream endpoint as company__posts. Documented under both company and post sections; SDK can route either alias to the same client method. Requires one of: company URL, companyId, or companyUniversalName."

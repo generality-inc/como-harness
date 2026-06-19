@@ -15,7 +15,8 @@
     "query": {"search": "string"},
     "status": "string",
     "error": "string",
-    "elements": [{"geoId": "string", "title": "string"}]
+    "elements": [{"geoId": "string", "title": "string"}],
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Autocomplete-based matching; ambiguous queries may return unexpected results (e.g. 'NY' may suggest 'New Zealand'). 'id' contains the closest match GeoID; 'elements' contains all suggestions."

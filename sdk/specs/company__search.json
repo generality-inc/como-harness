@@ -33,7 +33,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"search": "string", "location": "string", "geoId": "string", "companySize": "string"}
+    "query": {"search": "string", "location": "string", "geoId": "string", "companySize": "string"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "geoId overrides location string. Use geo search endpoint to resolve ambiguous locations. Pagination via page and paginationToken."

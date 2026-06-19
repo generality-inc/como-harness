@@ -58,7 +58,8 @@
       "previousElements": "integer", "pageSize": "integer", "paginationToken": "string"
     },
     "status": "string", "error": "string",
-    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"}
+    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Documented as 'group-posts' in upstream docs; in practice this is post-search filtered by group parameter. Same upstream endpoint as post__search."

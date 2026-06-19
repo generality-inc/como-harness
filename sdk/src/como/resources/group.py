@@ -3,7 +3,7 @@ from __future__ import annotations
 from como_core.group import Group, GroupSearchResult
 
 from .._params import clean_params, require_one_of
-from ._base import AsyncResource, SyncResource
+from ._base import AsyncResource, SyncResource, lift_cost
 
 _PATH_GET = "/v1/ghost/group"
 _PATH_SEARCH = "/v1/ghost/group-search"
@@ -27,7 +27,7 @@ class GroupResource(SyncResource):
     ) -> Group:
         params = _get_params(url=url, group_id=group_id)
         body = self._t.get(_PATH_GET, params=params)
-        return Group.model_validate(body.get("element") or {})
+        return lift_cost(Group.model_validate(body.get("element") or {}), body)
 
     def search(
         self,
@@ -49,7 +49,7 @@ class AsyncGroupResource(AsyncResource):
     ) -> Group:
         params = _get_params(url=url, group_id=group_id)
         body = await self._t.get(_PATH_GET, params=params)
-        return Group.model_validate(body.get("element") or {})
+        return lift_cost(Group.model_validate(body.get("element") or {}), body)
 
     async def search(
         self,

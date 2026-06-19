@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._common import BaseModel, LocationField, Pagination
+from ._common import BaseModel, CostMixin, LocationField, Pagination
 
 
 class _JobCompany(BaseModel):
@@ -16,7 +16,7 @@ class _JobSalary(BaseModel):
     text: str | None = None
 
 
-class Job(BaseModel):
+class Job(CostMixin):
     id: str | None = None
     title: str | None = None
     linkedin_url: str | None = None
@@ -52,6 +52,6 @@ class JobSearchHit(BaseModel):
     easy_apply: bool | None = None
 
 
-class JobSearchResult(BaseModel):
+class JobSearchResult(CostMixin):
     elements: list[JobSearchHit] = []
     pagination: Pagination | None = None

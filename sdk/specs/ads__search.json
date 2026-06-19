@@ -25,7 +25,8 @@
     },
     "status": "string",
     "error": "string",
-    "query": {"search": "string"}
+    "query": {"search": "string"},
+    "cost": {"amount": "string", "currency": "string"}
   },
   "error_schema": {"error": "integer", "message": "string"},
   "notes": "Either searchUrl or individual parameters (keyword, accountOwner, etc.) may be used. Pagination via paginationToken."

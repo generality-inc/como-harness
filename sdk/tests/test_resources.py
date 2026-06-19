@@ -5,6 +5,7 @@ from __future__ import annotations
 import httpx
 import pytest
 import respx
+from como_core import Cost
 
 from como import (
     AsyncComo,
@@ -17,6 +18,8 @@ from como import (
 
 BASE = "https://api.test.local"
 
+_COST = {"amount": "0.060000", "currency": "USD"}
+
 
 @pytest.fixture(autouse=True)
 def env(monkeypatch):
@@ -25,7 +28,7 @@ def env(monkeypatch):
 
 
 def _envelope(element: dict) -> dict:
-    return {"element": element, "status": "ok", "error": "", "query": {}}
+    return {"element": element, "status": "ok", "error": "", "query": {}, "cost": dict(_COST)}
 
 
 def _list(elements: list[dict], *, page: int = 1, total: int = 1, token: str | None = None) -> dict:
@@ -39,6 +42,7 @@ def _list(elements: list[dict], *, page: int = 1, total: int = 1, token: str | N
             "paginationToken": token,
         },
         "status": "ok",
+        "cost": dict(_COST),
     }
 
 
@@ -69,6 +73,7 @@ def test_company_get_unwraps_and_parses():
     assert company.name == "Acme"
     assert company.universal_name == "acme"
     assert company.employee_count == 250
+    assert company.cost == Cost(amount="0.060000", currency="USD")
 
 
 def test_company_get_requires_one_of():
@@ -88,6 +93,7 @@ def test_company_search_paginated():
         result = c.company.search(search="acme")
     assert len(result.elements) == 1
     assert result.pagination.total_pages == 3
+    assert result.cost.amount == "0.060000"
 
 
 @respx.mock
@@ -124,6 +130,7 @@ def test_post_get_requires_url_and_parses():
     assert post.id == "urn:li:activity:1"
     assert post.author.name == "Bill"
     assert post.engagement.likes == 100
+    assert post.cost == Cost(amount="0.060000", currency="USD")
 
 
 @respx.mock
@@ -210,7 +217,9 @@ def test_job_get_and_search():
         job = c.job.get(job_id="job-1")
         results = c.job.search(search="staff eng")
     assert job.company_name == "Acme"
+    assert job.cost == Cost(amount="0.060000", currency="USD")
     assert results.elements[0].title == "Staff Eng"
+    assert results.cost.amount == "0.060000"
 
 
 def test_job_get_requires_one_of():
@@ -237,6 +246,7 @@ def test_group_get_and_search():
         results = c.group.search(search="python")
     assert group.name == "Python Devs"
     assert group.member_count == 42_000
+    assert group.cost == Cost(amount="0.060000", currency="USD")
     assert results.elements[0].name == "Python Devs"
 
 
@@ -258,6 +268,7 @@ def test_ads_get_unwrapped_body():
                 "id": "ad-1",
                 "variants": [{"advertiser": {"name": "Acme"}, "creativeType": "single-image"}],
                 "about": {"format": "Sponsored content", "advertiserName": "Acme"},
+                "cost": dict(_COST),
             },
         )
     )
@@ -266,6 +277,7 @@ def test_ads_get_unwrapped_body():
     assert ad.id == "ad-1"
     assert ad.variants[0].advertiser.name == "Acme"
     assert ad.about.advertiser_name == "Acme"
+    assert ad.cost.amount == "0.060000"
 
 
 def test_ads_get_requires_one_of():
