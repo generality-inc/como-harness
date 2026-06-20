@@ -16,31 +16,24 @@ from __future__ import annotations
 import os
 import subprocess
 
-import httpx
 import typer
 
-from .._config import DEFAULT_TIMEOUT, resolve_api_key, resolve_base_url
+from ..client import Como
+from ..errors import ComoError
 
 
 def _gateway_env() -> dict[str, str]:
     """Mint a fresh gateway key and return the SDK env to inject. The key is
     short-lived + budget-capped and scoped to the caller's workspace team."""
-    base_url = resolve_base_url(None)
-    api_key = resolve_api_key(None)  # the stored como_live_ key
     try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
-            resp = client.post(
-                f"{base_url}/v1/llm-gateway/key",
-                headers={"Authorization": f"Bearer {api_key}"},
-            )
-            resp.raise_for_status()
-            data = resp.json()
-    except httpx.HTTPError as exc:
-        typer.secho(f"Couldn't get a gateway key from {base_url}: {exc}", fg="red", err=True)
+        with Como() as client:
+            key = client.gateway.create_key()
+    except ComoError as exc:
+        typer.secho(f"Couldn't get a gateway key: {exc}", fg="red", err=True)
         raise typer.Exit(code=1) from exc
 
-    gw = str(data["base_url"]).rstrip("/")
-    sk = str(data["api_key"])
+    gw = str(key.base_url).rstrip("/")
+    sk = str(key.api_key)
     return {
         # Anthropic SDK (and Claude Code, which reads AUTH_TOKEN).
         "ANTHROPIC_BASE_URL": gw,

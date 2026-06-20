@@ -264,11 +264,18 @@ async def main():
 asyncio.run(main())
 ```
 
-- Resources mirror the CLI: `client.profile|company|job|post|leads|group|ads|service|geo`.
-- Methods mirror commands: `.get(...)`, `.search(...)`, `.posts(...)`, `.comments(...)`,
-  `.reactions(...)`. Params are snake_case (`company_id`, `public_identifier`, `posted_limit`).
-- Responses are Pydantic models — fields are snake_case on the model (`description_text`,
-  `employee_count`) even though the raw JSON wire form is camelCase.
+- LinkedIn (ghost) resources: `client.profile|company|job|post|leads|group|ads|service|geo`.
+- **CRM resources** (first-party platform data — mirror `como crm records / lists / objects /
+  attributes / views`): `client.records`, `client.lists`, `client.objects`,
+  `client.attributes`, `client.views`. e.g. `client.records.upsert(object_id=…,
+  identity_slug="domain", identity_value="acme.com", data={…})`,
+  `client.lists.add_entries(list_id, record_ids=[…])`,
+  `client.objects.list()`. Both sync (`Como`) and async (`AsyncComo`).
+- Methods mirror commands: `.get(...)`, `.search(...)`, `.create(...)`, `.upsert(...)`,
+  `.update(...)`. Params are snake_case (`company_id`, `object_id`, `identity_slug`).
+- Responses are Pydantic models — fields are snake_case on the model. The CRM surface is
+  snake_case on the wire too; the LinkedIn (ghost) surface is camelCase on the wire but the
+  models expose snake_case (`description_text`, `employee_count`).
 - Pagination helpers: `como.pagination.iter_pages(...)` / `aiter_pages(...)` walk pages
   (token-aware) so you don't hand-roll the `--page`/token loop.
 

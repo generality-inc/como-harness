@@ -1,6 +1,6 @@
 ---
 name: como-sales
-description: The `como` platform for sales research & list-building — ghost LinkedIn data (companies, jobs, people/leads, posts), reading/creating/editing platform lists, running LLM-in-code through the como gateway, and orchestrating research agents (local or cloud). Use for company/people/job research, building & enriching lead lists, ICP discovery, and any `como linkedin` / `como lists` / `como run` task.
+description: The `como` platform for sales research & list-building — ghost LinkedIn data (companies, jobs, people/leads, posts), reading/creating/editing platform lists, running LLM-in-code through the como gateway, and orchestrating research agents (local or cloud). Use for company/people/job research, building & enriching lead lists, ICP discovery, and any `como linkedin` / `como crm lists` / `como run` task.
 metadata:
   short-description: como — sales research, list-building, and agent orchestration
 ---
@@ -15,7 +15,9 @@ thin index — **read the reference doc for whatever you're doing before non-tri
 | If you need to… | Read |
 |---|---|
 | Pull LinkedIn research data (companies, jobs, people/leads, posts, geo) | **[references/cli.md](references/cli.md)** — the full `como linkedin` + SDK reference |
-| **Read / build a list** (target accounts, lead lists) on the platform | **[references/lists.md](references/lists.md)** — `como lists ls / records / create / add` |
+| **Write the CRM** — create/upsert/update/merge records, references, dedup | **[references/records.md](references/records.md)** — `como crm records` (use `upsert`; it merges, re-runs safely) |
+| **Read / build a list** (target accounts, lead lists) + entries, list-columns, views | **[references/lists.md](references/lists.md)** — `como crm lists` (create/update/add/remove/entry-data/attrs/view) |
+| **Shape the schema** — new object types, columns, options, relationships | **[references/crm-schema.md](references/crm-schema.md)** — `como crm objects` / `como crm attributes` |
 | **Author / upload / run a cloud agent** (qualify every record in a list, again & again) | **[references/agents.md](references/agents.md)** — `como agents template / create / ls / run` |
 | Run an LLM **inside code** (classify / score / extract / filter a batch) | **[references/cli.md](references/cli.md)** → "Using an LLM in your code (`como run`)" |
 | **Drive a browser** (a source with no API — bookface/YC, a company site) | **[references/cloud-browser.md](references/cloud-browser.md)** — browser comes from **como, cloud by default** (never local unless asked); **profile-first** for logged-in sites (use/create one + have the user log in *before* starting); `browser-harness` is the driver underneath |

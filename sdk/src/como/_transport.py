@@ -65,6 +65,36 @@ class SyncTransport:
             raise ComoNetworkError(str(exc)) from exc
         return _handle(response)
 
+    def post(self, path: str, *, json: Any | None = None) -> Any:
+        try:
+            response = self._client.post(path, json=json)
+        except httpx.HTTPError as exc:
+            raise ComoNetworkError(str(exc)) from exc
+        return _handle(response)
+
+    def patch(self, path: str, *, json: Any | None = None) -> Any:
+        try:
+            response = self._client.patch(path, json=json)
+        except httpx.HTTPError as exc:
+            raise ComoNetworkError(str(exc)) from exc
+        return _handle(response)
+
+    def put(self, path: str, *, json: Any | None = None) -> Any:
+        try:
+            response = self._client.put(path, json=json)
+        except httpx.HTTPError as exc:
+            raise ComoNetworkError(str(exc)) from exc
+        return _handle(response)
+
+    def delete(self, path: str, *, json: Any | None = None) -> Any:
+        try:
+            # httpx's ``delete`` helper takes no body; use ``request`` so a
+            # bulk-delete can carry a JSON payload.
+            response = self._client.request("DELETE", path, json=json)
+        except httpx.HTTPError as exc:
+            raise ComoNetworkError(str(exc)) from exc
+        return _handle(response)
+
     def close(self) -> None:
         if self._owns_client:
             self._client.close()
@@ -101,6 +131,34 @@ class AsyncTransport:
     async def get(self, path: str, *, params: dict[str, str] | None = None) -> Any:
         try:
             response = await self._client.get(path, params=params)
+        except httpx.HTTPError as exc:
+            raise ComoNetworkError(str(exc)) from exc
+        return _handle(response)
+
+    async def post(self, path: str, *, json: Any | None = None) -> Any:
+        try:
+            response = await self._client.post(path, json=json)
+        except httpx.HTTPError as exc:
+            raise ComoNetworkError(str(exc)) from exc
+        return _handle(response)
+
+    async def patch(self, path: str, *, json: Any | None = None) -> Any:
+        try:
+            response = await self._client.patch(path, json=json)
+        except httpx.HTTPError as exc:
+            raise ComoNetworkError(str(exc)) from exc
+        return _handle(response)
+
+    async def put(self, path: str, *, json: Any | None = None) -> Any:
+        try:
+            response = await self._client.put(path, json=json)
+        except httpx.HTTPError as exc:
+            raise ComoNetworkError(str(exc)) from exc
+        return _handle(response)
+
+    async def delete(self, path: str, *, json: Any | None = None) -> Any:
+        try:
+            response = await self._client.request("DELETE", path, json=json)
         except httpx.HTTPError as exc:
             raise ComoNetworkError(str(exc)) from exc
         return _handle(response)

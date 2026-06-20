@@ -31,12 +31,11 @@ data, prefer ``como linkedin`` (the ghost API) — no account, no ban risk.
 
 from __future__ import annotations
 
-import json
-
-import httpx
 import typer
+from como_core.platform import BrowserProfile
 
-from .._config import DEFAULT_TIMEOUT, resolve_api_key, resolve_base_url
+from ..client import Como
+from ._output import api_errors, emit
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -47,11 +46,6 @@ profile_app = typer.Typer(
     help="Persistent, logged-in browser profiles agents reuse.",
 )
 app.add_typer(profile_app, name="profile")
-
-
-def _client() -> tuple[str, dict[str, str]]:
-    base, key = resolve_base_url(None), resolve_api_key(None)
-    return base, {"Authorization": f"Bearer {key}"}
 
 
 # --------------------------------------------------------------------------- #
@@ -70,16 +64,9 @@ def create(
     With `--profile`, the browser starts authenticated to whatever that profile
     holds cookies for.
     """
-    base, headers = _client()
-    body = {"profile": profile} if profile else {}
-    try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            resp = c.post(f"{base}/v1/browser", headers=headers, json=body)
-            resp.raise_for_status()
-    except httpx.HTTPError as exc:
-        typer.secho(f"Couldn't create a cloud browser: {exc}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    typer.echo(json.dumps(resp.json()))
+    with Como() as client, api_errors():
+        session = client.browser.create_session(profile=profile)
+    emit(session)
 
 
 @app.command("stop")
@@ -87,16 +74,8 @@ def stop(
     browser_id: str = typer.Argument(..., help="The browser session id from `create`."),
 ) -> None:
     """Stop (tear down) a cloud browser by id."""
-    base, headers = _client()
-    try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            resp = c.delete(f"{base}/v1/browser/{browser_id}", headers=headers)
-    except httpx.HTTPError as exc:
-        typer.secho(f"Stop failed: {exc}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    if resp.status_code not in (200, 204):
-        typer.secho(f"Stop failed ({resp.status_code}): {resp.text}", fg="red", err=True)
-        raise typer.Exit(code=1)
+    with Como() as client, api_errors():
+        client.browser.stop_session(browser_id)
     typer.secho("Stopped.", fg="green")
 
 
@@ -112,17 +91,10 @@ def profile_ls(
     json_out: bool = typer.Option(False, "--json", help="Print raw JSON instead of a table."),
 ) -> None:
     """List browser profiles you can use (shared + your own private)."""
-    base, headers = _client()
-    try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            resp = c.get(f"{base}/v1/browser/profiles", headers=headers)
-            resp.raise_for_status()
-    except httpx.HTTPError as exc:
-        typer.secho(f"Couldn't list profiles: {exc}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    rows = resp.json()
+    with Como() as client, api_errors():
+        rows = client.browser.profiles()
     if json_out:
-        typer.echo(json.dumps(rows, indent=2))
+        emit(rows, pretty=True)
         return
     if not rows:
         typer.secho("No browser profiles yet. Create one with `como browser profile create`.", fg="yellow")
@@ -130,22 +102,20 @@ def profile_ls(
     headers_row = ["NAME", "STATUS", "VISIBILITY", "HAS COOKIES FOR", "ID"]
     table = [
         [
-            p["name"],
-            p["status"],
-            p["visibility"],
-            ", ".join(p.get("cookie_domains") or []) or "—",
-            str(p["id"]),
+            p.name or "",
+            p.status or "",
+            p.visibility or "",
+            ", ".join(p.cookie_domains) or "—",
+            str(p.id),
         ]
         for p in rows
     ]
     widths = [max(len(r[i]) for r in [headers_row, *table]) for i in range(len(headers_row))]
     typer.echo(_fmt_row(headers_row, widths))
-    for r in table:
+    for p, r in zip(rows, table, strict=False):
         typer.echo(_fmt_row(r, widths))
-        if next((p for p in rows if str(p["id"]) == r[-1] and p.get("has_linkedin")), None):
-            typer.secho(
-                "    ⚠ has LinkedIn cookies — avoid logged-in LinkedIn automation (ban risk).", fg="yellow"
-            )
+        if p.has_linkedin:
+            typer.secho("    ⚠ has LinkedIn cookies — avoid logged-in LinkedIn automation (ban risk).", fg="yellow")
 
 
 @profile_app.command("create")
@@ -155,18 +125,10 @@ def profile_create(
     shared: bool = typer.Option(False, "--shared", help="Let any workspace member use it (default: private)."),
 ) -> None:
     """Create a browser profile (empty until you log in). Prints it as JSON."""
-    base, headers = _client()
-    body = {"name": name, "description": description, "visibility": "shared" if shared else "private"}
-    try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            resp = c.post(f"{base}/v1/browser/profile", headers=headers, json=body)
-            resp.raise_for_status()
-    except httpx.HTTPError as exc:
-        typer.secho(f"Couldn't create profile: {exc}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    p = resp.json()
-    typer.echo(json.dumps(p, indent=2))
-    typer.secho(f"\nNow log in once:  como browser profile login {p['name']!r}", fg="green")
+    with Como() as client, api_errors():
+        p = client.browser.create_profile(name=name, description=description, shared=shared)
+    emit(p, pretty=True)
+    typer.secho(f"\nNow log in once:  como browser profile login {p.name!r}", fg="green")
 
 
 @profile_app.command("rm")
@@ -174,50 +136,22 @@ def profile_rm(
     profile_id: str = typer.Argument(..., help="The profile id from `como browser profile ls`."),
 ) -> None:
     """Delete a browser profile (creator or workspace admin)."""
-    base, headers = _client()
-    try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            resp = c.delete(f"{base}/v1/browser/profile/{profile_id}", headers=headers)
-    except httpx.HTTPError as exc:
-        typer.secho(f"Delete failed: {exc}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    if resp.status_code not in (200, 204):
-        typer.secho(f"Delete failed ({resp.status_code}): {resp.text}", fg="red", err=True)
-        raise typer.Exit(code=1)
+    with Como() as client, api_errors():
+        client.browser.delete_profile(profile_id)
     typer.secho("Deleted.", fg="green")
 
 
-def _resolve_profile_id(base: str, headers: dict[str, str], profile: str) -> str:
+def _resolve_profile_id(client: Como, profile: str) -> str:
     """Resolve a profile name-or-id to its id."""
-    try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            lst = c.get(f"{base}/v1/browser/profiles", headers=headers)
-            lst.raise_for_status()
-    except httpx.HTTPError as exc:
-        typer.secho(f"Couldn't list profiles: {exc}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    match = next((p for p in lst.json() if str(p["id"]) == profile or p["name"] == profile), None)
+    match = next((p for p in client.browser.profiles() if str(p.id) == profile or p.name == profile), None)
     if match is None:
         typer.secho(f"No profile named or id'd {profile!r}. See `como browser profile ls`.", fg="red", err=True)
         raise typer.Exit(code=1)
-    return str(match["id"])
+    return str(match.id)
 
 
-def _post_profile(base: str, headers: dict[str, str], path: str, *, body: dict | None = None, what: str) -> dict:
-    """POST to a profile endpoint, surfacing the backend's error detail on failure."""
-    try:
-        with httpx.Client(timeout=DEFAULT_TIMEOUT) as c:
-            resp = c.post(f"{base}{path}", headers=headers, json=body or {})
-            resp.raise_for_status()
-    except httpx.HTTPError as exc:
-        detail = exc.response.text if isinstance(exc, httpx.HTTPStatusError) else str(exc)
-        typer.secho(f"{what}: {detail}", fg="red", err=True)
-        raise typer.Exit(code=1) from exc
-    return resp.json()
-
-
-def _linkedin_warn(p: dict) -> None:
-    if p.get("has_linkedin"):
+def _linkedin_warn(p: BrowserProfile) -> None:
+    if p.has_linkedin:
         typer.secho(
             "⚠ This profile has LinkedIn cookies — avoid using it for LinkedIn automation "
             "(high ban risk if it's logged in).",
@@ -286,47 +220,41 @@ def profile_login(
     if open_only and finish:
         typer.secho("Use either --open or --finish, not both.", fg="red", err=True)
         raise typer.Exit(code=1)
-    base, headers = _client()
-    pid = _resolve_profile_id(base, headers, profile)
 
-    # --finish: a human already signed in via a prior --open; persist it.
-    if finish:
-        p = _post_profile(base, headers, f"/v1/browser/profile/{pid}/login/complete", what="Couldn't finalize login")
-        typer.secho(f"Saved. Profile {p['name']!r} is now: {p['status']}.", fg="green")
+    with Como() as client, api_errors():
+        pid = _resolve_profile_id(client, profile)
+
+        # --finish: a human already signed in via a prior --open; persist it.
+        if finish:
+            p = client.browser.complete_login(pid)
+            typer.secho(f"Saved. Profile {p.name!r} is now: {p.status}.", fg="green")
+            _linkedin_warn(p)
+            return
+
+        # Open (or reconnect to) the live login browser.
+        session = client.browser.start_login(pid, login_url=login_url)
+
+        # --open: hand the session to the caller (agent) and exit — no blocking
+        # wait. Auto-open the live view locally if a human's here; drive it to the
+        # login page via browser-harness with BU_CDP_URL=<cdp_url>.
+        if open_only:
+            _auto_open_live(session.live_url)
+            emit(session)
+            return
+
+        # Interactive: show the live view (auto-open it), block until done, finish.
+        typer.secho("\nOpen this live view, go to the site you want, and sign in:", fg="green", bold=True)
+        typer.echo(f"  Live view: {session.live_url}")
+        if session.login_url:
+            typer.echo(f"  Starting page (navigate here yourself): {session.login_url}")
+        if session.expires_at:
+            typer.echo(f"  Expires: {session.expires_at}")
+        _auto_open_live(session.live_url)
+        typer.echo("\nWhen you've finished logging in, press Enter to save the session…")
+        input()
+        p = client.browser.complete_login(pid)
+        typer.secho(f"\nSaved. Profile {p.name!r} is now: {p.status}.", fg="green")
         _linkedin_warn(p)
-        return
-
-    # Open (or reconnect to) the live login browser.
-    session = _post_profile(
-        base,
-        headers,
-        f"/v1/browser/profile/{pid}/login",
-        body={"login_url": login_url} if login_url else {},
-        what="Couldn't open login browser",
-    )
-
-    # --open: hand the session to the caller (agent) and exit — no blocking wait.
-    # Auto-open the live view locally if a human's here; drive it to the login page
-    # via browser-harness with BU_CDP_URL=<cdp_url> (the browser starts blank).
-    if open_only:
-        _auto_open_live(session.get("live_url"))
-        keys = ("browser_id", "cdp_url", "live_url", "login_url", "expires_at")
-        typer.echo(json.dumps({k: session.get(k) for k in keys}))
-        return
-
-    # Interactive: show the live view (auto-open it), block until done, then finish.
-    typer.secho("\nOpen this live view, go to the site you want, and sign in:", fg="green", bold=True)
-    typer.echo(f"  Live view: {session['live_url']}")
-    if session.get("login_url"):
-        typer.echo(f"  Starting page (navigate here yourself): {session['login_url']}")
-    if session.get("expires_at"):
-        typer.echo(f"  Expires: {session['expires_at']}")
-    _auto_open_live(session.get("live_url"))
-    typer.echo("\nWhen you've finished logging in, press Enter to save the session…")
-    input()
-    p = _post_profile(base, headers, f"/v1/browser/profile/{pid}/login/complete", what="Couldn't finalize login")
-    typer.secho(f"\nSaved. Profile {p['name']!r} is now: {p['status']}.", fg="green")
-    _linkedin_warn(p)
 
 
 @profile_app.command("cancel")
@@ -334,7 +262,7 @@ def profile_cancel(
     profile: str = typer.Argument(..., help="Profile name or id whose in-progress login to cancel."),
 ) -> None:
     """Abort an in-progress login — tear down the live browser without saving."""
-    base, headers = _client()
-    pid = _resolve_profile_id(base, headers, profile)
-    _post_profile(base, headers, f"/v1/browser/profile/{pid}/login/cancel", what="Couldn't cancel login")
+    with Como() as client, api_errors():
+        pid = _resolve_profile_id(client, profile)
+        client.browser.cancel_login(pid)
     typer.secho("Cancelled — login browser torn down (nothing saved).", fg="green")

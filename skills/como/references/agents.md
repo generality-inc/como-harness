@@ -31,7 +31,7 @@ Only **scalar** top-level properties are mappable onto columns. Nested objects/a
 como agents template > offshore-ops.json
 $EDITOR offshore-ops.json
 
-# 2. upload it to your workspace (needs the workspace:manage role):
+# 2. upload it to your workspace (needs the agents:create permission — admin & member both hold it):
 como agents create --from-file offshore-ops.json     # -> the stored agent (id + slug)
 como agents ls                                        # NAME  SLUG  OUTPUT FIELDS
 
@@ -62,7 +62,9 @@ Model it on outship's `technical-roles-signal`. A strong mission:
 - It must be valid JSON Schema with **≥1 scalar top-level property**, or upload is rejected (422).
 
 ## Auth & gotchas
-- `como agents create` / `rm` need the **`workspace:manage`** role; `run` needs `records:update`.
-  A human `como_live_` key acts as your own member, so your real role applies.
+- `como agents create` needs **`agents:create`**, `rm` needs **`agents:delete`**, `link`/`unlink`
+  need **`agents:update`**, and `run` needs **`agents:run`**. The **admin** and **member** roles both
+  carry all four (guest holds none), so any non-guest member can author and run agents. A human
+  `como_live_` key acts as your own member, so your real role applies.
 - Runs cost money (the `budget_usd` ceiling per record × list size). Start on a small list.
 - Binding an agent to a column is currently a web-app step; the CLI authors/uploads/runs.

@@ -29,6 +29,8 @@ import httpx
 import typer
 
 from .._config import DEFAULT_TIMEOUT, credentials_path, load_credentials, resolve_base_url
+from ..client import Como
+from ..errors import ComoAPIError, ComoError
 
 app = typer.Typer(no_args_is_help=True, help="Authenticate the CLI/SDK against a Como workspace.")
 
@@ -132,31 +134,19 @@ def logout() -> None:
         return
 
     if creds is not None:
-        base_url = resolve_base_url(None)
         api_key = creds.get("api_key")
         if api_key:
+            # Revoke the stored key server-side by matching its prefix. Any
+            # failure (server unreachable, non-200) is swallowed — we still wipe
+            # local creds below.
+            own_prefix = api_key[:14]
             try:
-                with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
-                    keys = client.get(
-                        f"{base_url}/v1/cli/keys",
-                        headers={"Authorization": f"Bearer {api_key}"},
-                    )
-                if keys.status_code == 200:
-                    # Find our own key by comparing prefix.
-                    own_prefix = api_key[:14]
-                    for row in keys.json():
-                        if row.get("prefix") == own_prefix:
-                            client_del = httpx.Client(timeout=DEFAULT_TIMEOUT)
-                            try:
-                                client_del.delete(
-                                    f"{base_url}/v1/cli/keys/{row['id']}",
-                                    headers={"Authorization": f"Bearer {api_key}"},
-                                )
-                            finally:
-                                client_del.close()
+                with Como(api_key=api_key) as client:
+                    for row in client.account.list_keys():
+                        if row.prefix == own_prefix:
+                            client.account.delete_key(str(row.id))
                             break
-            except httpx.HTTPError:
-                # Server unreachable — still wipe local creds.
+            except ComoError:
                 pass
 
     with contextlib.suppress(FileNotFoundError):
@@ -171,18 +161,15 @@ def whoami() -> None:
     if not creds:
         typer.secho("Not logged in. Run `como auth login`.", fg="yellow")
         raise typer.Exit(code=1)
-    base_url = resolve_base_url(None)
-    api_key = creds["api_key"]
-    with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
-        resp = client.get(
-            f"{base_url}/v1/me",
-            headers={"Authorization": f"Bearer {api_key}"},
+    try:
+        with Como(api_key=creds["api_key"]) as client:
+            me = client.account.me()
+    except ComoAPIError as exc:
+        typer.secho(
+            f"Server returned {exc.status_code}: {exc.body if exc.body is not None else exc}", fg="red", err=True
         )
-    if resp.status_code == 200:
-        body = resp.json()
-        user = body.get("user", {})
-        ws = body.get("workspace", {})
-        typer.echo(f"{user.get('email')}  →  workspace {ws.get('slug')} ({ws.get('name')})")
-    else:
-        typer.secho(f"Server returned {resp.status_code}: {resp.text}", fg="red", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from exc
+    except ComoError as exc:
+        typer.secho(f"Couldn't reach the server: {exc}", fg="red", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"{me.user.get('email')}  →  workspace {me.workspace.get('slug')} ({me.workspace.get('name')})")

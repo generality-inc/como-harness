@@ -1,5 +1,38 @@
 from __future__ import annotations
 
+# Response models live in como_core; re-export the first-party CRM/platform ones
+# here so callers get everything from `from como import …` without reaching into
+# como_core. (LinkedIn ghost models stay in como_core to keep this surface tight.)
+from como_core import (
+    Agent,
+    AgentBatch,
+    Attribute,
+    AttributeOption,
+    BrowserProfile,
+    BrowserSession,
+    BulkDeleteResult,
+    CliKey,
+    CrmObject,
+    DuplicateCandidate,
+    GatewayKey,
+    ListEntriesRemovedResult,
+    ListEntriesResult,
+    ListEntry,
+    ListMembership,
+    Me,
+    ProfileLoginSession,
+    Record,
+    RecordList,
+    RecordRow,
+    RelatedRecord,
+    RelationshipAttributePair,
+    ReorderResult,
+    UpsertResult,
+    View,
+    ViewColumn,
+    ViewSort,
+)
+
 from ._version import __version__
 from .client import AsyncComo, Como
 from .errors import (
@@ -15,7 +48,15 @@ from .errors import (
 from .pagination import aiter_pages, iter_pages
 
 __all__ = [
+    "Agent",
+    "AgentBatch",
     "AsyncComo",
+    "Attribute",
+    "AttributeOption",
+    "BrowserProfile",
+    "BrowserSession",
+    "BulkDeleteResult",
+    "CliKey",
     "Como",
     "ComoAPIError",
     "ComoAuthError",
@@ -25,6 +66,25 @@ __all__ = [
     "ComoNotFoundError",
     "ComoRateLimitError",
     "ComoServerError",
+    "CrmObject",
+    "DuplicateCandidate",
+    "GatewayKey",
+    "ListEntriesRemovedResult",
+    "ListEntriesResult",
+    "ListEntry",
+    "ListMembership",
+    "Me",
+    "ProfileLoginSession",
+    "Record",
+    "RecordList",
+    "RecordRow",
+    "RelatedRecord",
+    "RelationshipAttributePair",
+    "ReorderResult",
+    "UpsertResult",
+    "View",
+    "ViewColumn",
+    "ViewSort",
     "__version__",
     "aiter_pages",
     "iter_pages",

@@ -1,41 +1,75 @@
-# Reading & building lists (`como lists`)
+# Reading & building lists (`como crm lists`)
 
-A **list** is a curated container of records (companies / people) — a target account list,
-a lead list, an ICP segment. `como lists` reads a list's contents and adds records to it,
-authenticated by your `como_live_` key (which acts as **you** — your own workspace member,
-with your real permissions). This is the same data the web app's Lists show.
+A **list** is a curated container of records (companies / people) — a target
+account list, a lead list, an ICP segment. `como crm lists` reads a list, builds it,
+manages its entries, and defines its per-list columns. Authenticated by your
+`como_live_` key (acts as **you**). A brand-new list has **no view** until you
+add one — same as the dashboard's "Start with a view" step. Decide table vs
+kanban and which columns matter, then create it (`como crm lists view create`); a
+list without a view renders empty in the app.
 
-## Commands
+Resolve a list by **name** (case-insensitive), **slug**, or **id** — every
+command accepts any. `como crm lists ls` to find one.
+
+## List lifecycle
 ```bash
-como lists ls                          # every list in your workspace: NAME  SLUG  ID
-como lists get "US - Seed/A/B > 20M"   # one list's metadata (JSON)
-como lists records "US - Seed/A/B > 20M"   # the rows: each record's name + status + data
-como lists records <id> --json         # full record data (name + record.data + list_data)
-como lists create "My targets" --object <object_id> [--emoji 🎯]
-como lists add <list> <record_id>      # add a record (or: add <list> id1,id2,id3)
+como crm lists ls                                  # NAME  SLUG  ID
+como crm lists get "US - Seed"                      # one list's metadata (JSON)
+como crm lists create "My targets" --object companies [--emoji 🎯]   # --object takes a slug or id
+como crm lists update "My targets" --name "Hot targets" --emoji 🔥
+como crm lists duplicate "My targets"               # clone shell + columns + views (no entries)
+como crm lists set-parent "My targets" --object people
+como crm lists rm "My targets"                      # soft-delete (entries/views/columns go with it)
+como crm lists reorder <id1>,<id2>,<id3>            # sidebar order
 ```
 
-Resolve a list by **name** (case-insensitive), **slug**, or **id** — every command accepts any.
-`ls` first to find the id when you need it.
+## Entries (records in the list)
+```bash
+como crm lists records "My targets"                 # rows: name + status + data + list_data
+como crm lists records "My targets" --json          # full JSON incl. list_data
+como crm lists add    "My targets" <rec_id>          # add one (or: add <list> id1,id2,id3)
+como crm lists remove "My targets" <rec_id>          # remove one (or comma-separated) — inverse of add
+como crm lists reorder-entries "My targets" <id1>,<id2>,<id3>
+```
+- `records` returns each row as `{id, name, status, data, list_data}` — `data`
+  is the record's own attributes; **`list_data`** is the list-scoped column
+  values (below). `entries` is the lower-level `{record_id + data}` view.
 
-## How it reads
-- `records` returns each row as `{id, name, status, data, list_data}` — `data` is the record's
-  own attributes (the company/person fields); `list_data` is the **list-scoped** attribute values
-  (columns that exist only on this list). Use it to see who's in a list and their enrichment.
-- `entries` is the lower-level view (`record_id` + `list_data` only, no record identity) — prefer
-  `records` for anything human-readable.
+## List-scoped columns (`list_data`)
+A list can have its own columns that only exist within it (e.g. "Stage",
+"Review score") — their values live per-membership in `list_data`, not on the
+record.
+```bash
+como crm lists attrs ls "My targets"
+como crm lists attrs create "My targets" --slug stage --name Stage --type select
+como crm lists entry-data "My targets" <rec_id> --data '{"stage":"warm"}'   # set values (merges)
+```
+(For select/status columns, add the choices with `como crm attributes option add` —
+see [crm-schema.md](crm-schema.md).)
+
+## Views (how a list renders)
+```bash
+como crm lists view ls "My targets"
+como crm lists view create "My targets" --name "Hot" --type table|kanban
+como crm lists view columns <view_id> domain,name,stage     # ordered, by slug or id
+como crm lists view sorts   <view_id> stage:desc,name:asc
+como crm lists view filter  <view_id> --json '<tree>'       # or --clear
+como crm lists view update  <view_id> --name "Hot" --default   # rename / set-default / --type convert
+como crm lists view operators                               # what each attribute type supports
+```
 
 ## Building a list (typical flow)
-1. Find or create the list: `como lists ls` (or `como lists create "<name>" --object <companies_object_id>`).
-2. Get record ids to add — from research (`como linkedin company get …` → resolve to platform
-   records) or an existing list.
-3. `como lists add <list> <record_id>` (single) or `como lists add <list> id1,id2,id3` (bulk).
+1. `como crm lists create "<name>" --object companies` (or find one with `ls`).
+2. **Give it a view** so it isn't empty in the app: `como crm lists view create "<name>"
+   --name "Table" --type table`, then shape it (`view columns/sorts/filter`).
+   Pick kanban instead when the list is a pipeline. (The dashboard prompts a human
+   for this same choice; an agent makes it explicitly.)
+3. Get record ids — research with `como linkedin …` then `como crm records upsert …`
+   (see [records.md](records.md)), or pull from an existing list.
+4. `como crm lists add "<name>" id1,id2,id3`.
+5. Optional: add list-scoped columns (`attrs create`) + set values (`entry-data`).
 
 ## Notes
-- A human API key acts with **your** workspace role. If you get a 403 on create/add, your role
-  lacks `lists:create` / `list_entries:add` — read access still works.
-- `create` needs the **parent object id** (which object the list holds — e.g. Companies). Get it
-  from the platform; lists are always scoped to one object.
-- This is platform data, distinct from `como linkedin` (ghost research). A common pipeline:
-  research with `como linkedin`, then materialize the winners into a list here. See
-  [workflows.md](workflows.md).
+- Writes need `crm:write` (your `como login` key has it). One entry per record
+  per list; lists hold one object type.
+- This is platform data, distinct from `como linkedin` (ghost research).

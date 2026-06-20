@@ -70,7 +70,13 @@ def test_agents_ls_shows_profile_name(monkeypatch: pytest.MonkeyPatch, tmp_path:
     respx.get("http://api.test/v1/crm/agents").mock(return_value=httpx.Response(200, json=[linked]))
     respx.get("http://api.test/v1/browser/profiles").mock(return_value=httpx.Response(200, json=[_PROFILE]))
 
-    result = CliRunner().invoke(_app.app, ["agents", "ls"])
+    # JSON is the default; the human table (with resolved profile name) is --table.
+    result = CliRunner().invoke(_app.app, ["agents", "ls", "--table"])
     assert result.exit_code == 0, result.output
     assert "PROFILE" in result.output
     assert "Bookface" in result.output
+
+    # Default output is machine-parseable JSON (no table headers).
+    as_json = CliRunner().invoke(_app.app, ["agents", "ls"])
+    assert as_json.exit_code == 0
+    assert json.loads(as_json.output)[0]["id"] == "a1"

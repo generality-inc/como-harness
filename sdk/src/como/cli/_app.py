@@ -10,6 +10,9 @@ from . import (
     agents as _agents_cli,
 )
 from . import (
+    attributes as _attributes_cli,
+)
+from . import (
     auth as _auth_cli,
 )
 from . import (
@@ -34,16 +37,25 @@ from . import (
     lists as _lists_cli,
 )
 from . import (
+    objects as _objects_cli,
+)
+from . import (
     post as _post_cli,
 )
 from . import (
     profile as _profile_cli,
 )
 from . import (
+    records as _records_cli,
+)
+from . import (
     run as _run_cli,
 )
 from . import (
     service as _service_cli,
+)
+from . import (
+    views as _views_cli,
 )
 
 app = typer.Typer(
@@ -107,7 +119,30 @@ linkedin.add_typer(_geo_cli.app, name="geo")
 app.add_typer(linkedin, name="linkedin")
 app.add_typer(_auth_cli.app, name="auth")
 app.add_typer(_browser_cli.app, name="browser")
-app.add_typer(_lists_cli.app, name="lists")
+
+# ---- `como crm` — the first-party CRM (records, lists, objects, attributes) ---
+# The symmetric counterpart to `como linkedin`: `linkedin` is what you can *learn*
+# (read-only ghost research); `crm` is what you *own* (your workspace's records,
+# lists, and the object/attribute catalog). One namespace keeps the top level flat.
+crm = typer.Typer(
+    name="crm",
+    no_args_is_help=True,
+    help=(
+        "Your workspace CRM — records, lists, and the object/attribute catalog.\n\n"
+        "`crm records` (rows) and `crm lists` (curated containers, + `lists view` / "
+        "`lists attrs`) are the daily surface; `crm objects` / `crm attributes` shape "
+        "the schema. Authenticated by your `como_live_` key; every command prints JSON "
+        "(`--pretty` to format). Run `como crm <resource> --help` for commands."
+    ),
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+_lists_cli.app.add_typer(_views_cli.app, name="view")
+crm.add_typer(_records_cli.app, name="records")
+crm.add_typer(_lists_cli.app, name="lists")
+crm.add_typer(_objects_cli.app, name="objects")
+crm.add_typer(_attributes_cli.app, name="attributes")
+app.add_typer(crm, name="crm")
+
 app.add_typer(_agents_cli.app, name="agents")
 
 # Passthrough launchers: run a command (or Claude Code) with the LLM gateway env
