@@ -50,6 +50,102 @@ como crm records update <id> --owner <member_id>           # set the owner
 como crm records update <id> --unset-owner                 # clear the owner
 ```
 
+## Recording a finding with evidence
+
+When you research a value for a record and want to **back it with proof** (so the
+cell shows your reasoning + sources on hover), attach an **evidence** payload to
+the write. This is the deliverable shape for a research agent: a value **plus**
+the proof behind it.
+
+**You decide which command to use based on where your target attribute lives** —
+there are two scopes, and the same finding lands in a different place depending
+on which you pick:
+
+- **COMPANY / object attribute** — the value belongs to the **record itself** (a
+  column on the Company / Person / Deal object). Write it with `records update`:
+
+  ```bash
+  como crm records update <record_id> --data '{"<slug>": <value>}' --evidence-file evidence.json
+  # or inline:  --evidence '{"<slug>": { … }}'
+  ```
+
+- **LIST attribute** — the value belongs to the record's **entry in a specific
+  list** (a list-scoped column, see [lists.md](lists.md)). Write it with `lists
+  entry-data`:
+
+  ```bash
+  como crm lists entry-data <list_id> <record_id> --data '{"<slug>": <value>}' --evidence-file evidence.json
+  # or inline:  --evidence '{"<slug>": { … }}'
+  ```
+
+If your mission says the target is a company/object attribute, use the first
+form; if it's a list attribute, use the second. The `<slug>` is the target
+attribute's slug (your mission gives it to you; otherwise `como crm attributes ls
+--object <obj>` or `como crm lists attrs ls <list>`). `<value>` is the value you
+researched. The value + its evidence land on the **record** (object form) or on
+that record's **list entry** (list form) — nowhere else.
+
+### The evidence shape (`EvidenceEntry`, keyed by slug)
+
+`--evidence` / `--evidence-file` carries a JSON object **keyed by attribute slug**
+— one `EvidenceEntry` per slug you're writing:
+
+```jsonc
+{
+  "<slug>": {
+    "rationale":  "<markdown>",   // REQUIRED — Markdown explaining the value.
+                                  //   This is the key field; write it even for a
+                                  //   "found nothing" zero rather than fabricate.
+    "items": [                    // the granular units behind the value (may be empty)
+      { "label":  "<short label>",        // e.g. a role title, a person, a competitor
+        "urls":   ["https://…", "…"],     // source link(s) for THIS item (may be empty)
+        "detail": "<one-line reason/snippet>" }
+    ],
+    "sources": [                  // optional — distinct pages/queries you consulted
+      { "url": "https://…", "title": "<page title>" }
+    ],
+    "confidence": 0.0             // optional, 0..1
+  }
+}
+```
+
+`rationale` is the only required field; everything else is optional (`items` may
+be empty — an honest "nothing found"). Each `item` renders as a uniform row
+(label + detail + its source links). The same slug must appear in **both** the
+`--data` value and the evidence object — they describe the same cell.
+
+**Recommended: write the evidence to a file and pass `--evidence-file`** rather
+than inlining it. The JSON has nested quotes and Markdown, so inlining via
+`--evidence '<json>'` is easy to break with shell escaping. Example:
+
+```bash
+cat > evidence.json <<'JSON'
+{
+  "hiring_signal": {
+    "rationale": "**Strong** — 3 open offshore back-office roles found across the careers page and the Greenhouse board.",
+    "items": [
+      { "label": "AR/AP Specialist (Manila)", "urls": ["https://acme.com/careers/ar-ap", "https://boards.greenhouse.io/acme/jobs/123"], "detail": "Full-time, posted 2w ago — offshore finance ops." },
+      { "label": "Medical Coder (Remote, PH)", "urls": ["https://acme.com/careers/coder"], "detail": "RCM / back-office, contractor." }
+    ],
+    "sources": [
+      { "url": "https://acme.com/careers", "title": "Acme — Careers" },
+      { "url": "https://boards.greenhouse.io/acme", "title": "Acme on Greenhouse" }
+    ],
+    "confidence": 0.8
+  }
+}
+JSON
+
+# object attribute on the record:
+como crm records update <record_id> --data '{"hiring_signal":"strong"}' --evidence-file evidence.json
+# OR — list attribute on the record's entry in a list:
+como crm lists entry-data <list_id> <record_id> --data '{"hiring_signal":"strong"}' --evidence-file evidence.json
+```
+
+The write **merges per slug**: only the slugs you pass are overwritten, so
+re-running over the same record replaces just that cell's value + evidence and
+leaves the rest intact.
+
 ## Relationships (reference attributes)
 
 Reference/relationship attributes (e.g. a Company's `people`) are **not** set via

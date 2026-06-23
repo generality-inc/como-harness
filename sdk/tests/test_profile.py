@@ -4,8 +4,31 @@ import httpx
 import pytest
 import respx
 from como_core import Cost
+from como_core.profile import Profile
 
 from como import AsyncComo, Como, ComoAuthError, ComoBadRequestError
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        (["Python", "Leadership"], ["Python", "Leadership"]),  # current upstream shape
+        ([], None),  # the exact body that caused the Jun 2026 profile-get outage
+        ([" ML ", None, "", "ABM"], ["ML", "ABM"]),  # blanks/None pruned, trimmed
+        ("Demand Generation", ["Demand Generation"]),  # legacy scalar string is coerced
+        ("   ", None),
+        (None, None),
+        ({"unexpected": "shape"}, None),  # any other shape is dropped, never raises
+    ],
+)
+def test_profile_top_skills_accepts_any_upstream_shape(raw, expected):
+    # topSkills drifted str -> list upstream; the model must coerce every shape to
+    # list[str] | None and NEVER raise (a raise becomes a 502 for the whole profile).
+    assert Profile.model_validate({"id": "abc", "topSkills": raw}).top_skills == expected
+
+
+def test_profile_omitted_top_skills_is_none():
+    assert Profile.model_validate({"id": "abc"}).top_skills is None
 
 BASE = "https://api.test.local"
 

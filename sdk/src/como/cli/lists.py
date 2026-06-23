@@ -27,6 +27,7 @@ from ..client import Como
 from ._output import api_errors, emit
 
 from ._resolve import resolve_list, resolve_object  # isort: skip
+from .records import _parse_evidence  # shared evidence parser; records imports only ._resolve/_output, so no cycle
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -252,13 +253,25 @@ def entry_data(
     ref: str = typer.Argument(..., help="List name, slug, or id."),
     record_id: str = typer.Argument(..., help="The record's id (must be in the list)."),
     data: str = typer.Option(..., "--data", help="List-scoped column values as a JSON object (merged)."),
+    evidence: str | None = typer.Option(
+        None, "--evidence", help="Proof per list-scoped column as a JSON object keyed by slug → EvidenceEntry."
+    ),
+    evidence_file: str | None = typer.Option(
+        None, "--evidence-file", help="Path to a JSON file with the same content as --evidence (preferred for agents)."
+    ),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
 ) -> None:
-    """Set a record's list-scoped column values (the entry's `list_data`); merges."""
+    """Set a record's list-scoped column values (the entry's `list_data`); merges.
+
+    Pass ``--evidence``/``--evidence-file`` to attach per-column hover-proof
+    (stored in the entry's ``__agent_evidence``), exactly like ``records update``."""
     parsed = _parse_data(data)
+    evidence_data = _parse_evidence(evidence, evidence_file)
     with Como() as client, api_errors():
         lst = resolve_list(client, ref)
-        entry = client.lists.update_entry_data(str(lst.id), record_id=record_id, data=parsed)
+        entry = client.lists.update_entry_data(
+            str(lst.id), record_id=record_id, data=parsed, evidence=evidence_data
+        )
     emit(entry, pretty=pretty)
 
 

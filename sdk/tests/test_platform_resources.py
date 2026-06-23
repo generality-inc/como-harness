@@ -60,6 +60,32 @@ def test_browser_profiles_and_login():
     assert json.loads(login.calls.last.request.content) == {"login_url": "https://site"}
 
 
+@respx.mock
+def test_browser_get_check_report_update_profile():
+    ready = {"id": "p1", "name": "Bookface", "status": "ready", "visibility": "private"}
+    get = respx.get(f"{BASE}/v1/browser/profile/p1").mock(return_value=httpx.Response(200, json=ready))
+    check = respx.post(f"{BASE}/v1/browser/profile/p1/check").mock(return_value=httpx.Response(200, json=ready))
+    report = respx.post(f"{BASE}/v1/browser/profile/p1/report").mock(
+        return_value=httpx.Response(200, json={**ready, "status": "needs_login"})
+    )
+    patch = respx.patch(f"{BASE}/v1/browser/profile/p1").mock(
+        return_value=httpx.Response(200, json={**ready, "name": "BF", "visibility": "shared"})
+    )
+    with Como() as c:
+        got = c.browser.get_profile("p1")
+        checked = c.browser.check_profile("p1")
+        reported = c.browser.report_profile("p1", logged_in=False)
+        updated = c.browser.update_profile("p1", name="BF", visibility="shared")
+    assert got.status == "ready"
+    assert checked.name == "Bookface"
+    assert reported.status == "needs_login"
+    assert updated.name == "BF"
+    assert get.called and check.called
+    # report sends the boolean; update sends only the fields that were set.
+    assert json.loads(report.calls.last.request.content) == {"logged_in": False}
+    assert json.loads(patch.calls.last.request.content) == {"name": "BF", "visibility": "shared"}
+
+
 # ---------- agents ----------
 
 

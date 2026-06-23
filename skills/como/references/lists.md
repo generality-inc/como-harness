@@ -47,6 +47,20 @@ como crm lists entry-data "My targets" <rec_id> --data '{"stage":"warm"}'   # se
 (For select/status columns, add the choices with `como crm attributes option add` —
 see [crm-schema.md](crm-schema.md).)
 
+### Recording a finding with evidence (list attribute)
+When you research a value for a **list attribute** and want to back it with proof
+(rationale + sources shown on the cell hover), attach an `--evidence-file` to the
+`entry-data` write — the value + its proof land on this record's **list entry**:
+```bash
+como crm lists entry-data "My targets" <rec_id> --data '{"stage":"warm"}' --evidence-file evidence.json
+```
+If your target were a **company/object attribute** instead, you'd write to the
+record with `como crm records update …` — you choose the command from where the
+attribute lives. The `EvidenceEntry` shape (keyed by slug; `rationale` is the one
+required field) and a copy-pasteable example are documented once in
+**[records.md → "Recording a finding with evidence"](records.md)**; the same shape
+and `--evidence-file` apply here.
+
 ## Views (how a list renders)
 ```bash
 como crm lists view ls "My targets"

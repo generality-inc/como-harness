@@ -131,6 +131,75 @@ def profile_create(
     typer.secho(f"\nNow log in once:  como browser profile login {p.name!r}", fg="green")
 
 
+@profile_app.command("get")
+def profile_get(
+    profile: str = typer.Argument(..., help="Profile name or id."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON."),
+) -> None:
+    """Show a single browser profile's details as JSON."""
+    with Como() as client, api_errors():
+        pid = _resolve_profile_id(client, profile)
+        p = client.browser.get_profile(pid)
+    emit(p, pretty=pretty)
+
+
+@profile_app.command("update")
+def profile_update(
+    profile: str = typer.Argument(..., help="Profile name or id."),
+    name: str | None = typer.Option(None, "--name", help="New label for the profile."),
+    description: str | None = typer.Option(None, "--description", "-d", help="New description."),
+    visibility: str | None = typer.Option(
+        None, "--visibility", help="New visibility: 'private' or 'shared'."
+    ),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON."),
+) -> None:
+    """Edit a profile's name / description / visibility (creator or admin).
+
+    Only the flags you pass are changed; omitted fields stay as-is.
+    """
+    with Como() as client, api_errors():
+        pid = _resolve_profile_id(client, profile)
+        p = client.browser.update_profile(
+            pid, name=name or None, description=description or None, visibility=visibility or None
+        )
+    emit(p, pretty=pretty)
+
+
+@profile_app.command("check")
+def profile_check(
+    profile: str = typer.Argument(..., help="Profile name or id."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON."),
+) -> None:
+    """Check the profile's live session / login state. Prints the profile as JSON."""
+    with Como() as client, api_errors():
+        pid = _resolve_profile_id(client, profile)
+        p = client.browser.check_profile(pid)
+    emit(p, pretty=pretty)
+
+
+@profile_app.command("report")
+def profile_report(
+    profile: str = typer.Argument(..., help="Profile name or id."),
+    logged_in: bool = typer.Option(
+        ...,
+        "--logged-in/--needs-login",
+        help="Whether the profile was still logged in for what you needed "
+        "(--needs-login moves it to needs_login).",
+    ),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON."),
+) -> None:
+    """Report whether the profile was still logged in; moves it to ready / needs_login.
+
+    For agents: after using a profile, report its login state so it's re-logged-in
+    before the next run if it had gone stale.
+    """
+    with Como() as client, api_errors():
+        pid = _resolve_profile_id(client, profile)
+        p = client.browser.report_profile(pid, logged_in=logged_in)
+    emit(p, pretty=pretty)
+    _linkedin_warn(p)
+
+
 @profile_app.command("rm")
 def profile_rm(
     profile_id: str = typer.Argument(..., help="The profile id from `como browser profile ls`."),

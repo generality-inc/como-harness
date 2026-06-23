@@ -27,7 +27,7 @@
       "linkedinUrl": "string",
       "photo": "string",
       "registeredAt": "string (date-time)",
-      "topSkills": "string",
+      "topSkills": ["string"],
       "connectionsCount": "integer",
       "followerCount": "integer",
       "openToWork": "boolean",

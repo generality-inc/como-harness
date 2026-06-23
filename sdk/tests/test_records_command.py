@@ -65,6 +65,58 @@ def test_records_create_with_list(monkeypatch: pytest.MonkeyPatch, tmp_path: obj
 
 
 @respx.mock
+def test_records_create_with_evidence_string(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    respx.get("http://api.test/v1/crm/objects").mock(return_value=httpx.Response(200, json=[_OBJECT]))
+    post = respx.post("http://api.test/v1/crm/records").mock(return_value=httpx.Response(200, json=_RECORD))
+    ev = {"domain": {"rationale": "homepage", "items": [], "sources": ["acme.com"], "confidence": 0.9}}
+
+    result = CliRunner().invoke(
+        _app.app,
+        ["crm", "records", "create", "--object", _OBJECT["id"], "--evidence", json.dumps(ev)],
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(post.calls.last.request.content)["evidence"] == ev
+
+
+@respx.mock
+def test_records_create_with_evidence_file(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    _env(monkeypatch, tmp_path)
+    respx.get("http://api.test/v1/crm/objects").mock(return_value=httpx.Response(200, json=[_OBJECT]))
+    post = respx.post("http://api.test/v1/crm/records").mock(return_value=httpx.Response(200, json=_RECORD))
+    ev = {"tier": {"rationale": "ICP fit", "items": [], "sources": [], "confidence": 0.7}}
+    ev_path = tmp_path / "evidence.json"
+    ev_path.write_text(json.dumps(ev))
+
+    result = CliRunner().invoke(
+        _app.app,
+        ["crm", "records", "create", "--object", _OBJECT["id"], "--evidence-file", str(ev_path)],
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(post.calls.last.request.content)["evidence"] == ev
+
+
+@respx.mock
+def test_records_create_omits_evidence_by_default(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    post = respx.post("http://api.test/v1/crm/records").mock(return_value=httpx.Response(200, json=_RECORD))
+
+    result = CliRunner().invoke(_app.app, ["crm", "records", "create", "--object", _OBJECT["id"]])
+    assert result.exit_code == 0, result.output
+    assert "evidence" not in json.loads(post.calls.last.request.content)
+
+
+def test_records_create_bad_evidence_json(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    result = CliRunner().invoke(
+        _app.app,
+        ["crm", "records", "create", "--object", _OBJECT["id"], "--evidence", "[1,2]"],
+    )
+    assert result.exit_code == 1
+    assert "must be a JSON object" in result.output
+
+
+@respx.mock
 def test_records_upsert_parses_match(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     _env(monkeypatch, tmp_path)
     respx.get("http://api.test/v1/crm/objects").mock(return_value=httpx.Response(200, json=[_OBJECT]))

@@ -172,6 +172,20 @@ class AttributesResource(SyncResource):
     def archive_option(self, attribute_id: str, option_id: str) -> None:
         self._t.delete(f"{_BASE}/{attribute_id}/options/{option_id}")
 
+    def set_agent(self, attribute_id: str, *, agent_id: str, output_field: str) -> Attribute:
+        body = {"agent": {"agent_id": agent_id, "output_field": output_field}}
+        return Attribute.model_validate(self._t.patch(f"{_BASE}/{attribute_id}/agent", json=body))
+
+    def unbind_agent(self, attribute_id: str) -> Attribute:
+        return Attribute.model_validate(self._t.patch(f"{_BASE}/{attribute_id}/agent", json={"agent": None}))
+
+    def set_enrichment(self, attribute_id: str, *, source: str, field: str) -> Attribute:
+        body = {"enrichment": {"source": source, "field": field}}
+        return Attribute.model_validate(self._t.patch(f"{_BASE}/{attribute_id}/enrichment", json=body))
+
+    def clear_enrichment(self, attribute_id: str) -> Attribute:
+        return Attribute.model_validate(self._t.patch(f"{_BASE}/{attribute_id}/enrichment", json={"enrichment": None}))
+
 
 class AsyncAttributesResource(AsyncResource):
     async def list(self, *, object_id: str) -> list[Attribute]:
@@ -278,3 +292,19 @@ class AsyncAttributesResource(AsyncResource):
 
     async def archive_option(self, attribute_id: str, option_id: str) -> None:
         await self._t.delete(f"{_BASE}/{attribute_id}/options/{option_id}")
+
+    async def set_agent(self, attribute_id: str, *, agent_id: str, output_field: str) -> Attribute:
+        body = {"agent": {"agent_id": agent_id, "output_field": output_field}}
+        return Attribute.model_validate(await self._t.patch(f"{_BASE}/{attribute_id}/agent", json=body))
+
+    async def unbind_agent(self, attribute_id: str) -> Attribute:
+        return Attribute.model_validate(await self._t.patch(f"{_BASE}/{attribute_id}/agent", json={"agent": None}))
+
+    async def set_enrichment(self, attribute_id: str, *, source: str, field: str) -> Attribute:
+        body = {"enrichment": {"source": source, "field": field}}
+        return Attribute.model_validate(await self._t.patch(f"{_BASE}/{attribute_id}/enrichment", json=body))
+
+    async def clear_enrichment(self, attribute_id: str) -> Attribute:
+        return Attribute.model_validate(
+            await self._t.patch(f"{_BASE}/{attribute_id}/enrichment", json={"enrichment": None})
+        )

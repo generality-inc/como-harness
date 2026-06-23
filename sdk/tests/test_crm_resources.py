@@ -53,6 +53,51 @@ def test_records_create_posts_and_parses():
 
 
 @respx.mock
+def test_records_create_includes_evidence_when_given():
+    route = respx.post(f"{BASE}/v1/crm/records").mock(return_value=httpx.Response(200, json=_RECORD))
+    ev = {"domain": {"rationale": "from homepage", "items": [], "sources": ["acme.com"], "confidence": 0.9}}
+    with Como() as c:
+        c.records.create(object_id=_OBJECT["id"], name="Acme", data={"domain": "acme.com"}, evidence=ev)
+    assert json.loads(route.calls.last.request.content)["evidence"] == ev
+
+
+@respx.mock
+def test_records_create_omits_evidence_when_none():
+    route = respx.post(f"{BASE}/v1/crm/records").mock(return_value=httpx.Response(200, json=_RECORD))
+    with Como() as c:
+        c.records.create(object_id=_OBJECT["id"], name="Acme")
+    assert "evidence" not in json.loads(route.calls.last.request.content)
+
+
+@respx.mock
+def test_records_upsert_and_update_include_evidence():
+    ev = {"tier": {"rationale": "ICP fit", "items": [], "sources": [], "confidence": 0.7}}
+    upsert_resp = {"record": _RECORD, "created": False, "changed_fields": []}
+    up = respx.post(f"{BASE}/v1/crm/records/upsert").mock(return_value=httpx.Response(200, json=upsert_resp))
+    patch = respx.patch(f"{BASE}/v1/crm/records/{_RECORD['id']}").mock(return_value=httpx.Response(200, json=_RECORD))
+    with Como() as c:
+        c.records.upsert(object_id=_OBJECT["id"], identity_slug="domain", identity_value="acme.com", evidence=ev)
+        c.records.update(_RECORD["id"], status="active", evidence=ev)
+    assert json.loads(up.calls.last.request.content)["evidence"] == ev
+    update_body = json.loads(patch.calls.last.request.content)
+    assert update_body == {"status": "active", "evidence": ev}
+
+
+@respx.mock
+def test_attributes_set_and_unbind_agent():
+    attr = {"id": "55555555-5555-5555-5555-555555555555", "slug": "summary", "object_id": _OBJECT["id"]}
+    route = respx.patch(f"{BASE}/v1/crm/attributes/{attr['id']}/agent").mock(
+        return_value=httpx.Response(200, json=attr)
+    )
+    with Como() as c:
+        c.attributes.set_agent(attr["id"], agent_id="agent-1", output_field="text")
+        first = json.loads(route.calls[0].request.content)
+        c.attributes.unbind_agent(attr["id"])
+    assert first == {"agent": {"agent_id": "agent-1", "output_field": "text"}}
+    assert json.loads(route.calls.last.request.content) == {"agent": None}
+
+
+@respx.mock
 def test_records_upsert_returns_typed_result():
     resp = {"record": _RECORD, "created": True, "changed_fields": ["domain"]}
     respx.post(f"{BASE}/v1/crm/records/upsert").mock(return_value=httpx.Response(200, json=resp))

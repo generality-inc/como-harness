@@ -93,6 +93,19 @@ def test_lists_update_remove_entry_data_and_attrs():
 
 
 @respx.mock
+def test_lists_entry_data_with_evidence():
+    """An agent writing a list-scoped value attaches proof in the same call —
+    the body carries both `data` and `evidence` (keyed by slug)."""
+    entry = respx.patch(f"{BASE}/v1/crm/lists/l1/entries/r1").mock(
+        return_value=httpx.Response(200, json={"id": "e1", "record_id": "r1", "data": {"stage": "warm"}})
+    )
+    ev = {"stage": {"rationale": "warmed via 2 touches", "confidence": 0.8}}
+    with Como() as c:
+        c.lists.update_entry_data("l1", record_id="r1", data={"stage": "warm"}, evidence=ev)
+    assert json.loads(entry.calls.last.request.content) == {"data": {"stage": "warm"}, "evidence": ev}
+
+
+@respx.mock
 def test_views_update_sets_default_and_renames():
     route = respx.patch(f"{BASE}/v1/crm/views/v1").mock(
         return_value=httpx.Response(200, json={"id": "v1", "name": "Hot", "is_default": True, "view_type": "table"})
@@ -196,6 +209,37 @@ def test_cli_records_update_owner(monkeypatch, tmp_path):
 
 
 @respx.mock
+def test_cli_attributes_bind_agent(monkeypatch, tmp_path):
+    _env(monkeypatch, tmp_path)
+    attr_id = "55555555-5555-5555-5555-555555555555"
+    attr = {"id": attr_id, "slug": "summary", "object_id": "o1"}
+    patch = respx.patch(f"{BASE}/v1/crm/attributes/{attr_id}/agent").mock(
+        return_value=httpx.Response(200, json=attr)
+    )
+    res = CliRunner().invoke(
+        _app.app,
+        ["crm", "attributes", "bind", attr_id, "--agent", "agent-1", "--output-field", "text"],
+    )
+    assert res.exit_code == 0, res.output
+    # A bare id binds without scanning objects.
+    assert json.loads(patch.calls.last.request.content) == {
+        "agent": {"agent_id": "agent-1", "output_field": "text"}
+    }
+
+
+@respx.mock
+def test_cli_attributes_unbind_agent(monkeypatch, tmp_path):
+    _env(monkeypatch, tmp_path)
+    attr_id = "55555555-5555-5555-5555-555555555555"
+    patch = respx.patch(f"{BASE}/v1/crm/attributes/{attr_id}/agent").mock(
+        return_value=httpx.Response(200, json={"id": attr_id, "slug": "summary", "object_id": "o1"})
+    )
+    res = CliRunner().invoke(_app.app, ["crm", "attributes", "unbind", attr_id])
+    assert res.exit_code == 0, res.output
+    assert json.loads(patch.calls.last.request.content) == {"agent": None}
+
+
+@respx.mock
 def test_cli_records_unlink_clears_refs(monkeypatch, tmp_path):
     _env(monkeypatch, tmp_path)
     rec = {"id": "r1", "object_id": "o1", "name": "Acme"}
@@ -207,3 +251,80 @@ def test_cli_records_unlink_clears_refs(monkeypatch, tmp_path):
     res = CliRunner().invoke(_app.app, ["crm", "records", "unlink", "r1", "--attribute", "investors"])
     assert res.exit_code == 0, res.output
     assert json.loads(put.calls.last.request.content) == {"attribute_id": "a1", "target_record_ids": []}
+
+
+# ---------------- SDK: duplicate + enrichment ----------------
+
+_ATTR_ID = "55555555-5555-5555-5555-555555555555"
+
+
+@respx.mock
+def test_attributes_duplicate():
+    attr = {"id": "a2", "slug": "tier-copy", "object_id": "o1"}
+    route = respx.post(f"{BASE}/v1/crm/attributes/{_ATTR_ID}/duplicate").mock(
+        return_value=httpx.Response(201, json=attr)
+    )
+    with Como() as c:
+        out = c.attributes.duplicate(_ATTR_ID)
+    assert out.slug == "tier-copy"
+    assert json.loads(route.calls.last.request.content) == {}
+
+
+@respx.mock
+def test_attributes_set_and_clear_enrichment():
+    attr = {"id": _ATTR_ID, "slug": "headcount", "object_id": "o1"}
+    route = respx.patch(f"{BASE}/v1/crm/attributes/{_ATTR_ID}/enrichment").mock(
+        return_value=httpx.Response(200, json=attr)
+    )
+    with Como() as c:
+        c.attributes.set_enrichment(_ATTR_ID, source="company", field="employee_count")
+        first = json.loads(route.calls[0].request.content)
+        c.attributes.clear_enrichment(_ATTR_ID)
+    assert first == {"enrichment": {"source": "company", "field": "employee_count"}}
+    assert json.loads(route.calls.last.request.content) == {"enrichment": None}
+
+
+# ---------------- CLI: duplicate + enrichment ----------------
+
+
+@respx.mock
+def test_cli_attributes_duplicate(monkeypatch, tmp_path):
+    _env(monkeypatch, tmp_path)
+    attr = {"id": "a2", "slug": "tier-copy", "object_id": "o1"}
+    post = respx.post(f"{BASE}/v1/crm/attributes/{_ATTR_ID}/duplicate").mock(
+        return_value=httpx.Response(201, json=attr)
+    )
+    # A bare id clones without scanning objects.
+    res = CliRunner().invoke(_app.app, ["crm", "attributes", "duplicate", _ATTR_ID])
+    assert res.exit_code == 0, res.output
+    assert post.called
+    assert json.loads(res.output)["slug"] == "tier-copy"
+
+
+@respx.mock
+def test_cli_attributes_enrichment_set(monkeypatch, tmp_path):
+    _env(monkeypatch, tmp_path)
+    attr = {"id": _ATTR_ID, "slug": "headcount", "object_id": "o1"}
+    patch = respx.patch(f"{BASE}/v1/crm/attributes/{_ATTR_ID}/enrichment").mock(
+        return_value=httpx.Response(200, json=attr)
+    )
+    res = CliRunner().invoke(
+        _app.app,
+        ["crm", "attributes", "enrichment", "set", _ATTR_ID, "--source", "company", "--field", "employee_count"],
+    )
+    assert res.exit_code == 0, res.output
+    assert json.loads(patch.calls.last.request.content) == {
+        "enrichment": {"source": "company", "field": "employee_count"}
+    }
+
+
+@respx.mock
+def test_cli_attributes_enrichment_clear(monkeypatch, tmp_path):
+    _env(monkeypatch, tmp_path)
+    attr = {"id": _ATTR_ID, "slug": "headcount", "object_id": "o1"}
+    patch = respx.patch(f"{BASE}/v1/crm/attributes/{_ATTR_ID}/enrichment").mock(
+        return_value=httpx.Response(200, json=attr)
+    )
+    res = CliRunner().invoke(_app.app, ["crm", "attributes", "enrichment", "clear", _ATTR_ID])
+    assert res.exit_code == 0, res.output
+    assert json.loads(patch.calls.last.request.content) == {"enrichment": None}

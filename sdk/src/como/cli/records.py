@@ -54,20 +54,60 @@ def _parse_data(data: str) -> dict:
     return parsed
 
 
+def _parse_evidence(evidence: str | None, evidence_file: str | None) -> dict | None:
+    """Resolve ``--evidence`` / ``--evidence-file`` into a dict (file wins). None if neither given.
+
+    The content is a JSON object keyed by attribute slug → an EvidenceEntry
+    ``{"rationale": str, "items": [...], "sources": [...], "confidence": float}``.
+    Exits on bad JSON / non-object."""
+    if evidence_file is not None:
+        try:
+            raw = open(evidence_file, encoding="utf-8").read()  # noqa: SIM115
+        except OSError as exc:
+            typer.secho(f"--evidence-file could not be read: {exc}", fg="red", err=True)
+            raise typer.Exit(code=1) from exc
+        source = "--evidence-file"
+    elif evidence is not None:
+        raw = evidence
+        source = "--evidence"
+    else:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        typer.secho(f"{source} is not valid JSON: {exc}", fg="red", err=True)
+        raise typer.Exit(code=1) from exc
+    if not isinstance(parsed, dict):
+        typer.secho(f"{source} must be a JSON object keyed by attribute slug.", fg="red", err=True)
+        raise typer.Exit(code=1)
+    return parsed
+
+
 @app.command("create")
 def create(
     object_ref: str = typer.Option(..., "--object", help="Object slug or id (e.g. 'companies')."),
     name: str | None = typer.Option(None, "--name", help="The record's display name."),
     data: str = typer.Option("{}", "--data", help="Field values as a JSON object string."),
     list_ref: str | None = typer.Option(None, "--list", help="Add the record to this list (name, slug, or id)."),
+    evidence: str | None = typer.Option(
+        None, "--evidence", help="Proof per attribute as a JSON object keyed by slug → EvidenceEntry."
+    ),
+    evidence_file: str | None = typer.Option(
+        None, "--evidence-file", help="Path to a JSON file with the same content (preferred for multi-line proof)."
+    ),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
 ) -> None:
-    """Create a new CRM record. Always inserts — use `upsert` to dedupe."""
+    """Create a new CRM record. Always inserts — use `upsert` to dedupe.
+
+    Pass ``--evidence``/``--evidence-file`` to attach per-attribute proof."""
     parsed = _parse_data(data)
+    evidence_data = _parse_evidence(evidence, evidence_file)
     with Como() as client, api_errors():
         object_id = resolve_object(client, object_ref)
         list_id = str(resolve_list(client, list_ref).id) if list_ref is not None else None
-        record = client.records.create(object_id=object_id, name=name, data=parsed, list_id=list_id)
+        record = client.records.create(
+            object_id=object_id, name=name, data=parsed, list_id=list_id, evidence=evidence_data
+        )
     emit(record, pretty=pretty)
 
 
@@ -80,16 +120,24 @@ def upsert(
     name: str | None = typer.Option(None, "--name", help="The record's display name."),
     data: str = typer.Option("{}", "--data", help="Field values as a JSON object string."),
     list_ref: str | None = typer.Option(None, "--list", help="Add the record to this list (name, slug, or id)."),
+    evidence: str | None = typer.Option(
+        None, "--evidence", help="Proof per attribute as a JSON object keyed by slug → EvidenceEntry."
+    ),
+    evidence_file: str | None = typer.Option(
+        None, "--evidence-file", help="Path to a JSON file with the same content (preferred for multi-line proof)."
+    ),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
 ) -> None:
     """Idempotently create-or-update a record, matched by an identity attribute.
 
+    Pass ``--evidence``/``--evidence-file`` to attach per-attribute proof.
     Prints the record plus `created` (bool) and `changed_fields` (list)."""
     slug, sep, value = match.partition("=")
     if not sep or not slug:
         typer.secho("--match must be 'slug=value' (e.g. 'domain=acme.com').", fg="red", err=True)
         raise typer.Exit(code=1)
     parsed = _parse_data(data)
+    evidence_data = _parse_evidence(evidence, evidence_file)
     with Como() as client, api_errors():
         object_id = resolve_object(client, object_ref)
         list_id = str(resolve_list(client, list_ref).id) if list_ref is not None else None
@@ -100,6 +148,7 @@ def upsert(
             name=name,
             data=parsed,
             list_id=list_id,
+            evidence=evidence_data,
         )
     emit(result, pretty=pretty)
 
@@ -152,23 +201,38 @@ def update(
     status: str | None = typer.Option(None, "--status", help="New status."),
     owner: str | None = typer.Option(None, "--owner", help="Set the owner (a workspace member id)."),
     unset_owner: bool = typer.Option(False, "--unset-owner", help="Clear the record's owner."),
+    evidence: str | None = typer.Option(
+        None, "--evidence", help="Proof per attribute as a JSON object keyed by slug → EvidenceEntry."
+    ),
+    evidence_file: str | None = typer.Option(
+        None, "--evidence-file", help="Path to a JSON file with the same content (preferred for multi-line proof)."
+    ),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
 ) -> None:
-    """Update a record. Only the fields you pass are sent (``--data`` merges)."""
+    """Update a record. Only the fields you pass are sent (``--data`` merges).
+
+    Pass ``--evidence``/``--evidence-file`` to attach per-attribute proof."""
     if owner is not None and unset_owner:
         typer.secho("Pass either --owner or --unset-owner, not both.", fg="red", err=True)
         raise typer.Exit(code=1)
     parsed = _parse_data(data) if data is not None else None
-    if name is None and parsed is None and status is None and owner is None and not unset_owner:
+    evidence_data = _parse_evidence(evidence, evidence_file)
+    if name is None and parsed is None and status is None and owner is None and not unset_owner and evidence_data is None:
         typer.secho(
-            "Nothing to update — pass at least one of --name/--data/--status/--owner/--unset-owner.",
+            "Nothing to update — pass at least one of --name/--data/--status/--owner/--unset-owner/--evidence.",
             fg="red",
             err=True,
         )
         raise typer.Exit(code=1)
     with Como() as client, api_errors():
         record = client.records.update(
-            record_id, name=name, data=parsed, status=status, owner_member_id=owner, unset_owner=unset_owner
+            record_id,
+            name=name,
+            data=parsed,
+            status=status,
+            owner_member_id=owner,
+            unset_owner=unset_owner,
+            evidence=evidence_data,
         )
     emit(record, pretty=pretty)
 

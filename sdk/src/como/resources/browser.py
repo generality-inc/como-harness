@@ -21,6 +21,12 @@ def _create_profile_body(*, name: str, description: str | None, shared: bool) ->
     return {"name": name, "description": description, "visibility": "shared" if shared else "private"}
 
 
+def _update_profile_body(*, name: str | None, description: str | None, visibility: str | None) -> dict:
+    # Only fields that are sent (not None) are changed by the API.
+    fields = {"name": name, "description": description, "visibility": visibility}
+    return {k: v for k, v in fields.items() if v is not None}
+
+
 class BrowserResource(SyncResource):
     # --- sessions ---------------------------------------------------------
     def create_session(self, *, profile: str | None = None) -> BrowserSession:
@@ -37,6 +43,28 @@ class BrowserResource(SyncResource):
     def create_profile(self, *, name: str, description: str | None = None, shared: bool = False) -> BrowserProfile:
         body = _create_profile_body(name=name, description=description, shared=shared)
         return BrowserProfile.model_validate(self._t.post(f"{_BASE}/profile", json=body))
+
+    def get_profile(self, profile_id: str) -> BrowserProfile:
+        return BrowserProfile.model_validate(self._t.get(f"{_BASE}/profile/{profile_id}"))
+
+    def update_profile(
+        self,
+        profile_id: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        visibility: str | None = None,
+    ) -> BrowserProfile:
+        body = _update_profile_body(name=name, description=description, visibility=visibility)
+        return BrowserProfile.model_validate(self._t.patch(f"{_BASE}/profile/{profile_id}", json=body))
+
+    def check_profile(self, profile_id: str) -> BrowserProfile:
+        return BrowserProfile.model_validate(self._t.post(f"{_BASE}/profile/{profile_id}/check", json={}))
+
+    def report_profile(self, profile_id: str, *, logged_in: bool) -> BrowserProfile:
+        return BrowserProfile.model_validate(
+            self._t.post(f"{_BASE}/profile/{profile_id}/report", json={"logged_in": logged_in})
+        )
 
     def delete_profile(self, profile_id: str) -> None:
         self._t.delete(f"{_BASE}/profile/{profile_id}")
@@ -68,6 +96,28 @@ class AsyncBrowserResource(AsyncResource):
     ) -> BrowserProfile:
         body = _create_profile_body(name=name, description=description, shared=shared)
         return BrowserProfile.model_validate(await self._t.post(f"{_BASE}/profile", json=body))
+
+    async def get_profile(self, profile_id: str) -> BrowserProfile:
+        return BrowserProfile.model_validate(await self._t.get(f"{_BASE}/profile/{profile_id}"))
+
+    async def update_profile(
+        self,
+        profile_id: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        visibility: str | None = None,
+    ) -> BrowserProfile:
+        body = _update_profile_body(name=name, description=description, visibility=visibility)
+        return BrowserProfile.model_validate(await self._t.patch(f"{_BASE}/profile/{profile_id}", json=body))
+
+    async def check_profile(self, profile_id: str) -> BrowserProfile:
+        return BrowserProfile.model_validate(await self._t.post(f"{_BASE}/profile/{profile_id}/check", json={}))
+
+    async def report_profile(self, profile_id: str, *, logged_in: bool) -> BrowserProfile:
+        return BrowserProfile.model_validate(
+            await self._t.post(f"{_BASE}/profile/{profile_id}/report", json={"logged_in": logged_in})
+        )
 
     async def delete_profile(self, profile_id: str) -> None:
         await self._t.delete(f"{_BASE}/profile/{profile_id}")

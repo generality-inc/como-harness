@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from typing import Any
+
+from pydantic import field_validator
+
 from ._common import BaseModel, CostMixin, DatePart, LocationField, Pagination
 from .post import Comment, Post, Reaction
 
@@ -82,7 +86,7 @@ class Profile(CostMixin):
     linkedin_url: str | None = None
     photo: str | None = None
     registered_at: str | None = None
-    top_skills: str | None = None
+    top_skills: list[str] | None = None
     connections_count: int | None = None
     follower_count: int | None = None
     open_to_work: bool | None = None
@@ -100,6 +104,27 @@ class Profile(CostMixin):
     publications: list[_Publication] | None = None
     featured: _Featured | None = None
     email: str | None = None
+
+    @field_validator("top_skills", mode="before")
+    @classmethod
+    def _normalize_top_skills(cls, v: Any) -> Any:
+        """Coerce ``topSkills`` to ``list[str] | None``, whatever shape it arrives in.
+
+        The upstream drifted this field from a scalar string to a list (commonly
+        ``[]``), which 502'd every profile-get until we widened it (Jun 2026
+        outage). We normalize defensively — list, legacy scalar string, or any
+        future scalar — so a single upstream type change on this field can never
+        again fail validation and take down the whole entity. Empty/blank → None.
+        """
+        if isinstance(v, str):
+            v = v.strip()
+            return [v] if v else None
+        if isinstance(v, list):
+            cleaned = [s for s in (str(x).strip() for x in v if x is not None) if s]
+            return cleaned or None
+        # None stays None; any other/unknown scalar shape is dropped rather than
+        # allowed to fail validation — this field must never 502 a profile.
+        return None
 
 
 class ProfileSearchHit(BaseModel):

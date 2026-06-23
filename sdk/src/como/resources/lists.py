@@ -115,9 +115,17 @@ class ListsResource(SyncResource):
         body = self._t.delete(f"{_BASE}/{list_id}/entries/bulk", json={"record_ids": record_ids})
         return ListEntriesRemovedResult.model_validate(body)
 
-    def update_entry_data(self, list_id: str, *, record_id: str, data: dict[str, Any]) -> ListEntry:
-        """Merge list-scoped column values into a record's entry (PATCH semantics)."""
-        return ListEntry.model_validate(self._t.patch(f"{_BASE}/{list_id}/entries/{record_id}", json={"data": data}))
+    def update_entry_data(
+        self, list_id: str, *, record_id: str, data: dict[str, Any], evidence: dict[str, Any] | None = None
+    ) -> ListEntry:
+        """Merge list-scoped column values into a record's entry (PATCH semantics).
+
+        ``evidence`` (slug → EvidenceEntry) attaches hover-proof for an
+        agent-written list cell, deep-merged into the entry's ``__agent_evidence``."""
+        body: dict[str, Any] = {"data": data}
+        if evidence is not None:
+            body["evidence"] = evidence
+        return ListEntry.model_validate(self._t.patch(f"{_BASE}/{list_id}/entries/{record_id}", json=body))
 
     def reorder_entries(self, list_id: str, *, ordered_record_ids: list[str]) -> ReorderResult:
         body = {"ordered_record_ids": ordered_record_ids}
@@ -207,9 +215,14 @@ class AsyncListsResource(AsyncResource):
         body = await self._t.delete(f"{_BASE}/{list_id}/entries/bulk", json={"record_ids": record_ids})
         return ListEntriesRemovedResult.model_validate(body)
 
-    async def update_entry_data(self, list_id: str, *, record_id: str, data: dict[str, Any]) -> ListEntry:
+    async def update_entry_data(
+        self, list_id: str, *, record_id: str, data: dict[str, Any], evidence: dict[str, Any] | None = None
+    ) -> ListEntry:
+        body: dict[str, Any] = {"data": data}
+        if evidence is not None:
+            body["evidence"] = evidence
         return ListEntry.model_validate(
-            await self._t.patch(f"{_BASE}/{list_id}/entries/{record_id}", json={"data": data})
+            await self._t.patch(f"{_BASE}/{list_id}/entries/{record_id}", json=body)
         )
 
     async def reorder_entries(self, list_id: str, *, ordered_record_ids: list[str]) -> ReorderResult:

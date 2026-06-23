@@ -25,10 +25,19 @@ _BASE = "/v1/crm"
 _RECORDS = f"{_BASE}/records"
 
 
-def _create_body(*, object_id: str, name: str | None, data: dict[str, Any] | None, list_id: str | None) -> dict:
+def _create_body(
+    *,
+    object_id: str,
+    name: str | None,
+    data: dict[str, Any] | None,
+    list_id: str | None,
+    evidence: dict[str, Any] | None,
+) -> dict:
     body: dict[str, Any] = {"object_id": object_id, "name": name, "data": data or {}}
     if list_id is not None:
         body["list_id"] = list_id
+    if evidence is not None:
+        body["evidence"] = evidence
     return body
 
 
@@ -40,6 +49,7 @@ def _upsert_body(
     name: str | None,
     data: dict[str, Any] | None,
     list_id: str | None,
+    evidence: dict[str, Any] | None,
 ) -> dict:
     body: dict[str, Any] = {
         "object_id": object_id,
@@ -50,6 +60,8 @@ def _upsert_body(
     }
     if list_id is not None:
         body["list_id"] = list_id
+    if evidence is not None:
+        body["evidence"] = evidence
     return body
 
 
@@ -60,6 +72,7 @@ def _update_body(
     status: str | None,
     owner_member_id: str | None,
     unset_owner: bool,
+    evidence: dict[str, Any] | None,
 ) -> dict:
     """Only the fields explicitly supplied — a server-side partial update."""
     body: dict[str, Any] = {}
@@ -73,6 +86,8 @@ def _update_body(
         body["owner_member_id"] = owner_member_id
     if unset_owner:
         body["unset_owner"] = True
+    if evidence is not None:
+        body["evidence"] = evidence
     return body
 
 
@@ -91,8 +106,9 @@ class RecordsResource(SyncResource):
         name: str | None = None,
         data: dict[str, Any] | None = None,
         list_id: str | None = None,
+        evidence: dict[str, Any] | None = None,
     ) -> Record:
-        body = _create_body(object_id=object_id, name=name, data=data, list_id=list_id)
+        body = _create_body(object_id=object_id, name=name, data=data, list_id=list_id, evidence=evidence)
         return Record.model_validate(self._t.post(_RECORDS, json=body))
 
     def upsert(
@@ -104,6 +120,7 @@ class RecordsResource(SyncResource):
         name: str | None = None,
         data: dict[str, Any] | None = None,
         list_id: str | None = None,
+        evidence: dict[str, Any] | None = None,
     ) -> UpsertResult:
         body = _upsert_body(
             object_id=object_id,
@@ -112,6 +129,7 @@ class RecordsResource(SyncResource):
             name=name,
             data=data,
             list_id=list_id,
+            evidence=evidence,
         )
         return UpsertResult.model_validate(self._t.post(f"{_RECORDS}/upsert", json=body))
 
@@ -146,9 +164,15 @@ class RecordsResource(SyncResource):
         status: str | None = None,
         owner_member_id: str | None = None,
         unset_owner: bool = False,
+        evidence: dict[str, Any] | None = None,
     ) -> Record:
         body = _update_body(
-            name=name, data=data, status=status, owner_member_id=owner_member_id, unset_owner=unset_owner
+            name=name,
+            data=data,
+            status=status,
+            owner_member_id=owner_member_id,
+            unset_owner=unset_owner,
+            evidence=evidence,
         )
         return Record.model_validate(self._t.patch(f"{_RECORDS}/{record_id}", json=body))
 
@@ -184,8 +208,9 @@ class AsyncRecordsResource(AsyncResource):
         name: str | None = None,
         data: dict[str, Any] | None = None,
         list_id: str | None = None,
+        evidence: dict[str, Any] | None = None,
     ) -> Record:
-        body = _create_body(object_id=object_id, name=name, data=data, list_id=list_id)
+        body = _create_body(object_id=object_id, name=name, data=data, list_id=list_id, evidence=evidence)
         return Record.model_validate(await self._t.post(_RECORDS, json=body))
 
     async def upsert(
@@ -197,6 +222,7 @@ class AsyncRecordsResource(AsyncResource):
         name: str | None = None,
         data: dict[str, Any] | None = None,
         list_id: str | None = None,
+        evidence: dict[str, Any] | None = None,
     ) -> UpsertResult:
         body = _upsert_body(
             object_id=object_id,
@@ -205,6 +231,7 @@ class AsyncRecordsResource(AsyncResource):
             name=name,
             data=data,
             list_id=list_id,
+            evidence=evidence,
         )
         return UpsertResult.model_validate(await self._t.post(f"{_RECORDS}/upsert", json=body))
 
@@ -243,9 +270,15 @@ class AsyncRecordsResource(AsyncResource):
         status: str | None = None,
         owner_member_id: str | None = None,
         unset_owner: bool = False,
+        evidence: dict[str, Any] | None = None,
     ) -> Record:
         body = _update_body(
-            name=name, data=data, status=status, owner_member_id=owner_member_id, unset_owner=unset_owner
+            name=name,
+            data=data,
+            status=status,
+            owner_member_id=owner_member_id,
+            unset_owner=unset_owner,
+            evidence=evidence,
         )
         return Record.model_validate(await self._t.patch(f"{_RECORDS}/{record_id}", json=body))
 

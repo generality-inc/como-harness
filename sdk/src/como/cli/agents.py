@@ -199,3 +199,50 @@ def run(
         batch = client.agents.run_batch(attribute_id=attribute, list_id=list_id)
     typer.secho(f"Started batch {batch.id} — {batch.total_runs} runs queued.", fg="green", err=True)
     emit(batch, pretty=pretty)
+
+
+@app.command("batches")
+def batches(
+    agent_id: str = typer.Argument(..., help="Agent id (UUID)."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
+) -> None:
+    """List an agent's batches — its run history, newest first."""
+    with Como() as client, api_errors():
+        result = client.agents.list_batches(agent_id)
+    emit(result, pretty=pretty)
+
+
+@app.command("batch")
+def batch(
+    batch_id: str = typer.Argument(..., help="Batch id (UUID)."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
+) -> None:
+    """Show one batch's progress — status, counters, and spend."""
+    with Como() as client, api_errors():
+        result = client.agents.get_batch(batch_id)
+    emit(result, pretty=pretty)
+
+
+@app.command("runs")
+def runs(
+    batch_id: str = typer.Argument(..., help="Batch id (UUID)."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
+) -> None:
+    """List a batch's per-record runs — status, value, cost, error, timestamps."""
+    with Como() as client, api_errors():
+        result = client.agents.list_runs(batch_id)
+    emit(result, pretty=pretty)
+
+
+@app.command("active")
+def active(
+    attribute: str = typer.Option(..., "--attribute", help="Agent-bound column (attribute) id."),
+    list_id: str = typer.Option(..., "--list", help="List id."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
+) -> None:
+    """Show the active (pending/running) batch for a column+list, or null."""
+    with Como() as client, api_errors():
+        result = client.agents.active_batch(attribute_id=attribute, list_id=list_id)
+    if result is None:
+        typer.secho("No active batch for this column + list.", fg="yellow", err=True)
+    emit(result, pretty=pretty)

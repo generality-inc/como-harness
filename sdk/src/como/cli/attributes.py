@@ -8,6 +8,11 @@ paired relationships. Authenticated by your ``como_live_`` key (writes need
     como crm attributes update <attr_id> --name "ICP Tier"
     como crm attributes rm <attr_id>
     como crm attributes reorder --object companies <attr_id,attr_id,...>
+    como crm attributes bind <attr> --agent <agent_id> --output-field summary
+    como crm attributes unbind <attr>
+    como crm attributes duplicate <attr>
+    como crm attributes enrichment set <attr> --source company --field employee_count
+    como crm attributes enrichment clear <attr>
     como crm attributes relationship --left-object companies --left-slug investors --left-name Investors \\
         --left-cardinality many --right-object investors --right-slug portfolio \\
         --right-name Portfolio --right-cardinality many
@@ -19,9 +24,21 @@ import typer
 
 from ..client import Como
 from ._output import api_errors, emit
-from ._resolve import resolve_object
+from ._resolve import UUID_RE, resolve_object
 
 app = typer.Typer(no_args_is_help=True, help="CRM attributes (object columns), options + relationships.")
+
+
+def _resolve_attribute_ref(client: Como, ref: str) -> str:
+    """Resolve an attribute ref (id or slug) to its id, scanning every object for a slug."""
+    if UUID_RE.match(ref):
+        return ref
+    for obj in client.objects.list():
+        for attr in client.attributes.list(object_id=str(obj.id)):
+            if attr.slug == ref:
+                return str(attr.id)
+    typer.secho(f"No attribute matching {ref!r}. Pass the attribute id, or scope it with its object.", fg="red", err=True)
+    raise typer.Exit(code=1)
 
 
 @app.command("ls")
@@ -123,6 +140,75 @@ def relationship(
             right_cardinality=right_cardinality,
         )
     emit(pair, pretty=pretty)
+
+
+@app.command("bind")
+def bind(
+    attribute_ref: str = typer.Argument(..., help="The attribute id or slug to bind."),
+    agent_id: str = typer.Option(..., "--agent", help="The agent id to run for this column."),
+    output_field: str = typer.Option(..., "--output-field", help="The agent output field to write into the column."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
+) -> None:
+    """Bind an agent to a column: its `--output-field` fills this attribute."""
+    with Como() as client, api_errors():
+        attribute_id = _resolve_attribute_ref(client, attribute_ref)
+        result = client.attributes.set_agent(attribute_id, agent_id=agent_id, output_field=output_field)
+    emit(result, pretty=pretty)
+
+
+@app.command("unbind")
+def unbind(
+    attribute_ref: str = typer.Argument(..., help="The attribute id or slug to unbind."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
+) -> None:
+    """Unbind any agent from a column (the inverse of `bind`)."""
+    with Como() as client, api_errors():
+        attribute_id = _resolve_attribute_ref(client, attribute_ref)
+        result = client.attributes.unbind_agent(attribute_id)
+    emit(result, pretty=pretty)
+
+
+@app.command("duplicate")
+def duplicate(
+    attribute_ref: str = typer.Argument(..., help="The attribute id or slug to clone."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
+) -> None:
+    """Clone a (non-system) attribute, options and all."""
+    with Como() as client, api_errors():
+        attribute_id = _resolve_attribute_ref(client, attribute_ref)
+        attr = client.attributes.duplicate(attribute_id)
+    emit(attr, pretty=pretty)
+
+
+# --- enrichment (which provider fills a column, from which provider field) ----
+enrichment_app = typer.Typer(no_args_is_help=True, help="Bind a column to the enrichment provider (or clear it).")
+app.add_typer(enrichment_app, name="enrichment")
+
+
+@enrichment_app.command("set")
+def enrichment_set(
+    attribute_ref: str = typer.Argument(..., help="The attribute id or slug."),
+    source: str = typer.Option(..., "--source", help="The enrichment provider key/source."),
+    field: str = typer.Option(..., "--field", help="The provider-native field that fills this column."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
+) -> None:
+    """Set which enrichment provider + provider field populates this column."""
+    with Como() as client, api_errors():
+        attribute_id = _resolve_attribute_ref(client, attribute_ref)
+        attr = client.attributes.set_enrichment(attribute_id, source=source, field=field)
+    emit(attr, pretty=pretty)
+
+
+@enrichment_app.command("clear")
+def enrichment_clear(
+    attribute_ref: str = typer.Argument(..., help="The attribute id or slug."),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
+) -> None:
+    """Clear a column's enrichment mapping (it stops being enrichable)."""
+    with Como() as client, api_errors():
+        attribute_id = _resolve_attribute_ref(client, attribute_ref)
+        attr = client.attributes.clear_enrichment(attribute_id)
+    emit(attr, pretty=pretty)
 
 
 # --- options (for select / status / multi_select attributes) -----------------

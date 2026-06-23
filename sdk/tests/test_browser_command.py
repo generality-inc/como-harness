@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import httpx
 import pytest
 import respx
@@ -110,3 +112,52 @@ def test_profile_cancel(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> No
     assert result.exit_code == 0, result.output
     assert cancelled.called
     assert "Cancelled" in result.output
+
+
+@respx.mock
+def test_profile_get(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    respx.get("http://api.test/v1/browser/profiles").mock(return_value=httpx.Response(200, json=_PROFILES))
+    respx.get("http://api.test/v1/browser/profile/p1").mock(
+        return_value=httpx.Response(200, json={"id": "p1", "name": "Bookface", "status": "ready"})
+    )
+    result = CliRunner().invoke(_app.app, ["browser", "profile", "get", "Bookface"])
+    assert result.exit_code == 0, result.output
+    assert "ready" in result.output
+
+
+@respx.mock
+def test_profile_update_sends_only_set_fields(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    respx.get("http://api.test/v1/browser/profiles").mock(return_value=httpx.Response(200, json=_PROFILES))
+    patch = respx.patch("http://api.test/v1/browser/profile/p1").mock(
+        return_value=httpx.Response(200, json={"id": "p1", "name": "Renamed", "status": "ready"})
+    )
+    result = CliRunner().invoke(_app.app, ["browser", "profile", "update", "Bookface", "--name", "Renamed"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(patch.calls.last.request.content) == {"name": "Renamed"}
+
+
+@respx.mock
+def test_profile_check(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    respx.get("http://api.test/v1/browser/profiles").mock(return_value=httpx.Response(200, json=_PROFILES))
+    check = respx.post("http://api.test/v1/browser/profile/p1/check").mock(
+        return_value=httpx.Response(200, json={"id": "p1", "name": "Bookface", "status": "ready"})
+    )
+    result = CliRunner().invoke(_app.app, ["browser", "profile", "check", "Bookface"])
+    assert result.exit_code == 0, result.output
+    assert check.called
+
+
+@respx.mock
+def test_profile_report_needs_login(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+    _env(monkeypatch, tmp_path)
+    respx.get("http://api.test/v1/browser/profiles").mock(return_value=httpx.Response(200, json=_PROFILES))
+    report = respx.post("http://api.test/v1/browser/profile/p1/report").mock(
+        return_value=httpx.Response(200, json={"id": "p1", "name": "Bookface", "status": "needs_login"})
+    )
+    result = CliRunner().invoke(_app.app, ["browser", "profile", "report", "Bookface", "--needs-login"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(report.calls.last.request.content) == {"logged_in": False}
+    assert "needs_login" in result.output
