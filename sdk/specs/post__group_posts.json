@@ -2,65 +2,221 @@
   "resource": "post",
   "action": "group_posts",
   "method": "GET",
-  "upstream_path": "/linkedin/post-search",
   "como_path": "/v1/ghost/post-search",
   "summary": "Retrieve posts in a group (alias on post-search filtered by group).",
   "query_params": [
-    {"name": "search", "type": "string", "required": false, "description": "Keywords to search for in posts"},
-    {"name": "group", "type": "string", "required": false, "description": "Group URL or Group ID"},
-    {"name": "profile", "type": "string", "required": false, "description": "Filter by author profile URL (comma-separated)"},
-    {"name": "profileId", "type": "string", "required": false, "description": "Filter by author profile ID (comma-separated)"},
-    {"name": "company", "type": "string", "required": false, "description": "Filter by company URL (comma-separated)"},
-    {"name": "companyId", "type": "string", "required": false, "description": "Filter by company ID (comma-separated)"},
-    {"name": "authorsCompany", "type": "string", "required": false, "description": "Companies where post authors work (comma-separated)"},
-    {"name": "authorsIndustryId", "type": "string", "required": false, "description": "Industry IDs of authors' companies (comma-separated)"},
-    {"name": "mentioningMember", "type": "string", "required": false, "description": "Filter posts mentioning profile URL or ID"},
-    {"name": "mentioningCompany", "type": "string", "required": false, "description": "Filter posts mentioning company URL or ID"},
-    {"name": "contentType", "type": "string", "required": false, "description": "Filter by content type: videos, images, live_videos, documents, collaborative_articles, jobs"},
-    {"name": "authorKeywords", "type": "string", "required": false, "description": "Filter by keywords in authors' profiles"},
-    {"name": "postedLimit", "type": "string", "required": false, "description": "Server-side filter by max posted date: 24h, week, month"},
-    {"name": "scrapePostedLimit", "type": "string", "required": false, "description": "Client-side filter: 1h, 24h, week, month, 3months, 6months, year"},
-    {"name": "sortBy", "type": "string", "required": false, "description": "Sort: relevance or date"},
-    {"name": "page", "type": "integer", "required": false, "description": "Page number for pagination (default: 1)"},
-    {"name": "paginationToken", "type": "string", "required": false, "description": "Token from previous page response"}
+    {
+      "name": "search",
+      "type": "string",
+      "required": false,
+      "description": "Keywords to search for in posts"
+    },
+    {
+      "name": "group",
+      "type": "string",
+      "required": false,
+      "description": "Group URL or Group ID"
+    },
+    {
+      "name": "profile",
+      "type": "string",
+      "required": false,
+      "description": "Filter by author profile URL (comma-separated)"
+    },
+    {
+      "name": "profileId",
+      "type": "string",
+      "required": false,
+      "description": "Filter by author profile ID (comma-separated)"
+    },
+    {
+      "name": "company",
+      "type": "string",
+      "required": false,
+      "description": "Filter by company URL (comma-separated)"
+    },
+    {
+      "name": "companyId",
+      "type": "string",
+      "required": false,
+      "description": "Filter by company ID (comma-separated)"
+    },
+    {
+      "name": "authorsCompany",
+      "type": "string",
+      "required": false,
+      "description": "Companies where post authors work (comma-separated)"
+    },
+    {
+      "name": "authorsIndustryId",
+      "type": "string",
+      "required": false,
+      "description": "Industry IDs of authors' companies (comma-separated)"
+    },
+    {
+      "name": "mentioningMember",
+      "type": "string",
+      "required": false,
+      "description": "Filter posts mentioning profile URL or ID"
+    },
+    {
+      "name": "mentioningCompany",
+      "type": "string",
+      "required": false,
+      "description": "Filter posts mentioning company URL or ID"
+    },
+    {
+      "name": "contentType",
+      "type": "string",
+      "required": false,
+      "description": "Filter by content type: videos, images, live_videos, documents, collaborative_articles, jobs"
+    },
+    {
+      "name": "authorKeywords",
+      "type": "string",
+      "required": false,
+      "description": "Filter by keywords in authors' profiles"
+    },
+    {
+      "name": "postedLimit",
+      "type": "string",
+      "required": false,
+      "description": "Server-side filter by max posted date: 24h, week, month"
+    },
+    {
+      "name": "scrapePostedLimit",
+      "type": "string",
+      "required": false,
+      "description": "Client-side filter: 1h, 24h, week, month, 3months, 6months, year"
+    },
+    {
+      "name": "sortBy",
+      "type": "string",
+      "required": false,
+      "description": "Sort: relevance or date"
+    },
+    {
+      "name": "page",
+      "type": "integer",
+      "required": false,
+      "description": "Page number for pagination (default: 1)"
+    },
+    {
+      "name": "paginationToken",
+      "type": "string",
+      "required": false,
+      "description": "Token from previous page response"
+    }
   ],
   "headers": [],
   "request_body": null,
   "response_schema": {
-    "elements": [{
-      "id": "string", "content": "string", "linkedinUrl": "string",
-      "author": {
-        "id": "string", "urn": "string", "publicIdentifier": "string", "universalName": "string",
-        "name": "string", "linkedinUrl": "string",
-        "type": "boolean", "info": "boolean", "website": "boolean", "websiteLabel": "boolean",
-        "avatar": {"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"}
-      },
-      "postedAt": {"timestamp": "integer", "date": "string", "postedAgoShort": "string", "postedAgoText": "string"},
-      "postImages": [{"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"}],
-      "postVideo": {"thumbnailUrl": "string", "videoUrl": "string"},
-      "article": {
-        "title": "string", "subtitle": "string", "link": "string", "linkLabel": "string", "description": "string",
-        "image": {"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"}
-      },
-      "repostId": "string", "repost": "object",
-      "repostedBy": {"publicIdentifier": "string", "name": "string", "linkedinUrl": "string"},
-      "newsletterUrl": "string", "newsletterTitle": "string",
-      "socialContent": {
-        "hideCommentsCount": "boolean", "hideReactionsCount": "boolean", "hideSocialActivityCounts": "boolean",
-        "hideShareAction": "boolean", "hideSendAction": "boolean", "hideRepostsCount": "boolean",
-        "hideViewsCount": "boolean", "hideReactAction": "boolean", "hideCommentAction": "boolean",
-        "shareUrl": "string", "showContributionExperience": "boolean", "showSocialDetail": "boolean"
-      },
-      "engagement": {"likes": "integer", "comments": "integer", "shares": "integer", "reactions": [{"type": "string", "count": "integer"}]}
-    }],
+    "elements": [
+      {
+        "id": "string",
+        "content": "string",
+        "linkedinUrl": "string",
+        "author": {
+          "id": "string",
+          "urn": "string",
+          "publicIdentifier": "string",
+          "universalName": "string",
+          "name": "string",
+          "linkedinUrl": "string",
+          "type": "boolean",
+          "info": "boolean",
+          "website": "boolean",
+          "websiteLabel": "boolean",
+          "avatar": {
+            "url": "string",
+            "width": "integer",
+            "height": "integer",
+            "expiresAt": "integer"
+          }
+        },
+        "postedAt": {
+          "timestamp": "integer",
+          "date": "string",
+          "postedAgoShort": "string",
+          "postedAgoText": "string"
+        },
+        "postImages": [
+          {
+            "url": "string",
+            "width": "integer",
+            "height": "integer",
+            "expiresAt": "integer"
+          }
+        ],
+        "postVideo": {
+          "thumbnailUrl": "string",
+          "videoUrl": "string"
+        },
+        "article": {
+          "title": "string",
+          "subtitle": "string",
+          "link": "string",
+          "linkLabel": "string",
+          "description": "string",
+          "image": {
+            "url": "string",
+            "width": "integer",
+            "height": "integer",
+            "expiresAt": "integer"
+          }
+        },
+        "repostId": "string",
+        "repost": "object",
+        "repostedBy": {
+          "publicIdentifier": "string",
+          "name": "string",
+          "linkedinUrl": "string"
+        },
+        "newsletterUrl": "string",
+        "newsletterTitle": "string",
+        "socialContent": {
+          "hideCommentsCount": "boolean",
+          "hideReactionsCount": "boolean",
+          "hideSocialActivityCounts": "boolean",
+          "hideShareAction": "boolean",
+          "hideSendAction": "boolean",
+          "hideRepostsCount": "boolean",
+          "hideViewsCount": "boolean",
+          "hideReactAction": "boolean",
+          "hideCommentAction": "boolean",
+          "shareUrl": "string",
+          "showContributionExperience": "boolean",
+          "showSocialDetail": "boolean"
+        },
+        "engagement": {
+          "likes": "integer",
+          "comments": "integer",
+          "shares": "integer",
+          "reactions": [
+            {
+              "type": "string",
+              "count": "integer"
+            }
+          ]
+        }
+      }
+    ],
     "pagination": {
-      "totalPages": "integer", "totalElements": "integer", "pageNumber": "integer",
-      "previousElements": "integer", "pageSize": "integer", "paginationToken": "string"
+      "totalPages": "integer",
+      "totalElements": "integer",
+      "pageNumber": "integer",
+      "previousElements": "integer",
+      "pageSize": "integer",
+      "paginationToken": "string"
     },
-    "status": "string", "error": "string",
-    "query": {"search": "string", "profileId": "string", "companyId": "string", "postedLimit": "string", "sortBy": "string", "page": "integer"},
-    "cost": {"amount": "string", "currency": "string"}
+    "cost": {
+      "amount": "string",
+      "currency": "string"
+    }
   },
-  "error_schema": {"error": "integer", "message": "string"},
+  "error_schema": {
+    "error": "integer",
+    "message": "string"
+  },
   "notes": "Documented as 'group-posts' in upstream docs; in practice this is post-search filtered by group parameter. Same upstream endpoint as post__search."
 }

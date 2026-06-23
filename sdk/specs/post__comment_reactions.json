@@ -2,37 +2,61 @@
   "resource": "post",
   "action": "comment_reactions",
   "method": "GET",
-  "upstream_path": "/linkedin/comment-reactions",
   "como_path": "/v1/ghost/comment-reactions",
   "summary": "Retrieve reactions to a post comment by URL.",
   "query_params": [
-    {"name": "url", "type": "string", "required": true, "description": "URL of the comment"},
-    {"name": "page", "type": "integer", "required": false, "description": "Page number for pagination (default: 1)"}
+    {
+      "name": "url",
+      "type": "string",
+      "required": true,
+      "description": "URL of the comment"
+    },
+    {
+      "name": "page",
+      "type": "integer",
+      "required": false,
+      "description": "Page number for pagination (default: 1)"
+    }
   ],
   "headers": [],
   "request_body": null,
   "response_schema": {
-    "elements": [{
-      "id": "string",
-      "reactionType": "string",
-      "postId": "string",
-      "actor": {
+    "elements": [
+      {
         "id": "string",
-        "name": "string",
-        "linkedinUrl": "string",
-        "position": "string",
-        "pictureUrl": "string",
-        "picture": {"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"}
+        "reactionType": "string",
+        "postId": "string",
+        "actor": {
+          "id": "string",
+          "name": "string",
+          "linkedinUrl": "string",
+          "position": "string",
+          "pictureUrl": "string",
+          "picture": {
+            "url": "string",
+            "width": "integer",
+            "height": "integer",
+            "expiresAt": "integer"
+          }
+        }
       }
-    }],
+    ],
     "pagination": {
-      "totalPages": "integer", "totalElements": "integer", "pageNumber": "integer",
-      "previousElements": "integer", "pageSize": "integer", "paginationToken": "string"
+      "totalPages": "integer",
+      "totalElements": "integer",
+      "pageNumber": "integer",
+      "previousElements": "integer",
+      "pageSize": "integer",
+      "paginationToken": "string"
     },
-    "status": "string",
-    "error": "string",
-    "cost": {"amount": "string", "currency": "string"}
+    "cost": {
+      "amount": "string",
+      "currency": "string"
+    }
   },
-  "error_schema": {"error": "integer", "message": "string"},
+  "error_schema": {
+    "error": "integer",
+    "message": "string"
+  },
   "notes": "Profile URLs may be returned in ID form without public slugs; use profile__get to resolve."
 }

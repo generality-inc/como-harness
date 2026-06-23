@@ -2,22 +2,34 @@
   "resource": "geo",
   "action": "search",
   "method": "GET",
-  "upstream_path": "/linkedin/geo-id-search",
   "como_path": "/v1/ghost/geo-id-search",
   "summary": "Search for geographic location identifiers by location text query.",
   "query_params": [
-    {"name": "search", "type": "string", "required": true, "description": "Location text to search for Geo ID"}
+    {
+      "name": "search",
+      "type": "string",
+      "required": true,
+      "description": "Location text to search for Geo ID"
+    }
   ],
   "headers": [],
   "request_body": null,
   "response_schema": {
     "id": "string",
-    "query": {"search": "string"},
-    "status": "string",
-    "error": "string",
-    "elements": [{"geoId": "string", "title": "string"}],
-    "cost": {"amount": "string", "currency": "string"}
+    "elements": [
+      {
+        "geoId": "string",
+        "title": "string"
+      }
+    ],
+    "cost": {
+      "amount": "string",
+      "currency": "string"
+    }
   },
-  "error_schema": {"error": "integer", "message": "string"},
+  "error_schema": {
+    "error": "integer",
+    "message": "string"
+  },
   "notes": "Autocomplete-based matching; ambiguous queries may return unexpected results (e.g. 'NY' may suggest 'New Zealand'). 'id' contains the closest match GeoID; 'elements' contains all suggestions."
 }

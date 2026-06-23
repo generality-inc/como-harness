@@ -2,11 +2,15 @@
   "resource": "post",
   "action": "get",
   "method": "GET",
-  "upstream_path": "/linkedin/post",
   "como_path": "/v1/ghost/post",
   "summary": "Retrieve details about a single post by URL.",
   "query_params": [
-    {"name": "url", "type": "string", "required": true, "description": "URL of the post"}
+    {
+      "name": "url",
+      "type": "string",
+      "required": true,
+      "description": "URL of the post"
+    }
   ],
   "headers": [],
   "request_body": null,
@@ -16,39 +20,97 @@
       "content": "string",
       "linkedinUrl": "string",
       "author": {
-        "id": "string", "urn": "string", "publicIdentifier": "string", "universalName": "string",
-        "name": "string", "linkedinUrl": "string",
-        "type": "boolean", "info": "boolean", "website": "boolean", "websiteLabel": "boolean",
-        "avatar": {"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"}
+        "id": "string",
+        "urn": "string",
+        "publicIdentifier": "string",
+        "universalName": "string",
+        "name": "string",
+        "linkedinUrl": "string",
+        "type": "boolean",
+        "info": "boolean",
+        "website": "boolean",
+        "websiteLabel": "boolean",
+        "avatar": {
+          "url": "string",
+          "width": "integer",
+          "height": "integer",
+          "expiresAt": "integer"
+        }
       },
-      "postedAt": {"timestamp": "integer", "date": "string", "postedAgoShort": "string", "postedAgoText": "string"},
-      "postImages": [{"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"}],
-      "postVideo": {"thumbnailUrl": "string", "videoUrl": "string"},
+      "postedAt": {
+        "timestamp": "integer",
+        "date": "string",
+        "postedAgoShort": "string",
+        "postedAgoText": "string"
+      },
+      "postImages": [
+        {
+          "url": "string",
+          "width": "integer",
+          "height": "integer",
+          "expiresAt": "integer"
+        }
+      ],
+      "postVideo": {
+        "thumbnailUrl": "string",
+        "videoUrl": "string"
+      },
       "article": {
-        "title": "string", "subtitle": "string", "link": "string", "linkLabel": "string", "description": "string",
-        "image": {"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"}
+        "title": "string",
+        "subtitle": "string",
+        "link": "string",
+        "linkLabel": "string",
+        "description": "string",
+        "image": {
+          "url": "string",
+          "width": "integer",
+          "height": "integer",
+          "expiresAt": "integer"
+        }
       },
       "repostId": "string",
       "repost": "object",
-      "repostedBy": {"publicIdentifier": "string", "name": "string", "linkedinUrl": "string"},
+      "repostedBy": {
+        "publicIdentifier": "string",
+        "name": "string",
+        "linkedinUrl": "string"
+      },
       "newsletterUrl": "string",
       "newsletterTitle": "string",
       "socialContent": {
-        "hideCommentsCount": "boolean", "hideReactionsCount": "boolean", "hideSocialActivityCounts": "boolean",
-        "hideShareAction": "boolean", "hideSendAction": "boolean", "hideRepostsCount": "boolean",
-        "hideViewsCount": "boolean", "hideReactAction": "boolean", "hideCommentAction": "boolean",
-        "shareUrl": "string", "showContributionExperience": "boolean", "showSocialDetail": "boolean"
+        "hideCommentsCount": "boolean",
+        "hideReactionsCount": "boolean",
+        "hideSocialActivityCounts": "boolean",
+        "hideShareAction": "boolean",
+        "hideSendAction": "boolean",
+        "hideRepostsCount": "boolean",
+        "hideViewsCount": "boolean",
+        "hideReactAction": "boolean",
+        "hideCommentAction": "boolean",
+        "shareUrl": "string",
+        "showContributionExperience": "boolean",
+        "showSocialDetail": "boolean"
       },
       "engagement": {
-        "likes": "integer", "comments": "integer", "shares": "integer",
-        "reactions": [{"type": "string", "count": "integer"}]
+        "likes": "integer",
+        "comments": "integer",
+        "shares": "integer",
+        "reactions": [
+          {
+            "type": "string",
+            "count": "integer"
+          }
+        ]
       }
     },
-    "status": "string",
-    "error": "string",
-    "query": {"post": "string"},
-    "cost": {"amount": "string", "currency": "string"}
+    "cost": {
+      "amount": "string",
+      "currency": "string"
+    }
   },
-  "error_schema": {"error": "integer", "message": "string"},
+  "error_schema": {
+    "error": "integer",
+    "message": "string"
+  },
   "notes": "Returns 400 for invalid request parameters."
 }

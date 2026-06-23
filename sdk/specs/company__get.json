@@ -2,13 +2,27 @@
   "resource": "company",
   "action": "get",
   "method": "GET",
-  "upstream_path": "/linkedin/company",
   "como_path": "/v1/ghost/company",
   "summary": "Retrieve a company profile using URL, universal name, or search query.",
   "query_params": [
-    {"name": "url", "type": "string", "required": false, "description": "URL of the company profile"},
-    {"name": "universalName", "type": "string", "required": false, "description": "Universal name identifier found in the company profile URL"},
-    {"name": "search", "type": "string", "required": false, "description": "Company name to search; returns the most relevant result"}
+    {
+      "name": "url",
+      "type": "string",
+      "required": false,
+      "description": "URL of the company profile"
+    },
+    {
+      "name": "universalName",
+      "type": "string",
+      "required": false,
+      "description": "Universal name identifier found in the company profile URL"
+    },
+    {
+      "name": "search",
+      "type": "string",
+      "required": false,
+      "description": "Company name to search; returns the most relevant result"
+    }
   ],
   "headers": [],
   "request_body": null,
@@ -21,9 +35,16 @@
       "website": "string",
       "linkedinUrl": "string",
       "logo": "string",
-      "foundedOn": {"month": "string|null", "year": "integer", "day": "string|null"},
+      "foundedOn": {
+        "month": "string|null",
+        "year": "integer",
+        "day": "string|null"
+      },
       "employeeCount": "integer",
-      "employeeCountRange": {"start": "integer", "end": "integer"},
+      "employeeCountRange": {
+        "start": "integer",
+        "end": "integer"
+      },
       "followerCount": "integer",
       "description": "string",
       "headquarter": {
@@ -35,19 +56,56 @@
         "line2": "string|null",
         "description": "string",
         "parsed": {
-          "text": "string", "countryCode": "string", "regionCode": "string|null",
-          "country": "string", "countryFull": "string", "state": "string", "city": "string"
+          "text": "string",
+          "countryCode": "string",
+          "regionCode": "string|null",
+          "country": "string",
+          "countryFull": "string",
+          "state": "string",
+          "city": "string"
         }
       },
-      "locations": [{
-        "localizedName": "string", "headquarter": "boolean", "description": "string|null",
-        "country": "string", "geographicArea": "string", "city": "string",
-        "postalCode": "string|null", "line1": "string", "line2": "string|null"
-      }],
-      "specialities": ["string"],
-      "industries": [{"id": "string", "name": "string", "urn": "string", "title": "string", "hierarchy": "string"}],
-      "logos": [{"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"}],
-      "backgroundCovers": [{"url": "string", "width": "integer", "height": "integer", "expiresAt": "integer"}],
+      "locations": [
+        {
+          "localizedName": "string",
+          "headquarter": "boolean",
+          "description": "string|null",
+          "country": "string",
+          "geographicArea": "string",
+          "city": "string",
+          "postalCode": "string|null",
+          "line1": "string",
+          "line2": "string|null"
+        }
+      ],
+      "specialities": [
+        "string"
+      ],
+      "industries": [
+        {
+          "id": "string",
+          "name": "string",
+          "urn": "string",
+          "title": "string",
+          "hierarchy": "string"
+        }
+      ],
+      "logos": [
+        {
+          "url": "string",
+          "width": "integer",
+          "height": "integer",
+          "expiresAt": "integer"
+        }
+      ],
+      "backgroundCovers": [
+        {
+          "url": "string",
+          "width": "integer",
+          "height": "integer",
+          "expiresAt": "integer"
+        }
+      ],
       "active": "boolean",
       "jobSearchUrl": "string",
       "phone": "string|null",
@@ -55,10 +113,19 @@
         "numberOfFundingRounds": "integer",
         "lastFundingRound": {
           "localizedFundingType": "string",
-          "leadInvestors": ["object"],
-          "moneyRaised": {"amount": "string", "currencyCode": "string"},
+          "leadInvestors": [
+            "object"
+          ],
+          "moneyRaised": {
+            "amount": "string",
+            "currencyCode": "string"
+          },
           "fundingRoundUrl": "string",
-          "announcedOn": {"month": "integer", "year": "integer", "day": "integer"},
+          "announcedOn": {
+            "month": "integer",
+            "year": "integer",
+            "day": "integer"
+          },
           "numberOfOtherInvestors": "integer",
           "investorsUrl": "string"
         },
@@ -68,11 +135,14 @@
       },
       "pageVerified": "boolean"
     },
-    "status": "string",
-    "error": "string",
-    "query": {"url": "string", "universalName": "string"},
-    "cost": {"amount": "string", "currency": "string"}
+    "cost": {
+      "amount": "string",
+      "currency": "string"
+    }
   },
-  "error_schema": {"error": "integer", "message": "string"},
+  "error_schema": {
+    "error": "integer",
+    "message": "string"
+  },
   "notes": "At least one of (url, universalName, search) is required. search returns the most relevant match."
 }

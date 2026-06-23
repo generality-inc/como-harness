@@ -2,17 +2,51 @@
   "resource": "profile",
   "action": "get",
   "method": "GET",
-  "upstream_path": "/linkedin/profile",
   "como_path": "/v1/ghost/profile",
   "summary": "Retrieve a profile by URL, public identifier, or profile ID.",
   "query_params": [
-    {"name": "url", "type": "string", "required": false, "description": "URL of the profile"},
-    {"name": "publicIdentifier", "type": "string", "required": false, "description": "Public identifier of the profile"},
-    {"name": "profileId", "type": "string", "required": false, "description": "ID of the profile"},
-    {"name": "main", "type": "string", "required": false, "description": "Set to 'true' to return main profile version visible without expanding sections"},
-    {"name": "findEmail", "type": "string", "required": false, "description": "Include to find profile email with SMTP verification for deliverability"},
-    {"name": "skipSmtp", "type": "string", "required": false, "description": "Skip SMTP verification when used with findEmail; performs minimal validation"},
-    {"name": "includeAboutProfile", "type": "string", "required": false, "description": "Include to scrape the About this profile popup"}
+    {
+      "name": "url",
+      "type": "string",
+      "required": false,
+      "description": "URL of the profile"
+    },
+    {
+      "name": "publicIdentifier",
+      "type": "string",
+      "required": false,
+      "description": "Public identifier of the profile"
+    },
+    {
+      "name": "profileId",
+      "type": "string",
+      "required": false,
+      "description": "ID of the profile"
+    },
+    {
+      "name": "main",
+      "type": "string",
+      "required": false,
+      "description": "Set to 'true' to return main profile version visible without expanding sections"
+    },
+    {
+      "name": "findEmail",
+      "type": "string",
+      "required": false,
+      "description": "Include to find profile email with SMTP verification for deliverability"
+    },
+    {
+      "name": "skipSmtp",
+      "type": "string",
+      "required": false,
+      "description": "Skip SMTP verification when used with findEmail; performs minimal validation"
+    },
+    {
+      "name": "includeAboutProfile",
+      "type": "string",
+      "required": false,
+      "description": "Include to scrape the About this profile popup"
+    }
   ],
   "headers": [],
   "request_body": null,
@@ -27,7 +61,9 @@
       "linkedinUrl": "string",
       "photo": "string",
       "registeredAt": "string (date-time)",
-      "topSkills": ["string"],
+      "topSkills": [
+        "string"
+      ],
       "connectionsCount": "integer",
       "followerCount": "integer",
       "openToWork": "boolean",
@@ -45,44 +81,118 @@
           "city": "string"
         }
       },
-      "currentPosition": [{"companyName": "string"}],
-      "experience": [{
-        "companyName": "string",
-        "duration": "string",
-        "position": "string",
-        "location": "string",
-        "companyLink": "string",
-        "description": "string",
-        "startDate": {"month": "string", "year": "integer", "text": "string"},
-        "endDate": {"month": "string", "year": "integer", "text": "string"},
-        "employmentType": "string"
-      }],
-      "education": [{
-        "title": "string",
+      "currentPosition": [
+        {
+          "companyName": "string"
+        }
+      ],
+      "experience": [
+        {
+          "companyName": "string",
+          "duration": "string",
+          "position": "string",
+          "location": "string",
+          "companyLink": "string",
+          "description": "string",
+          "startDate": {
+            "month": "string",
+            "year": "integer",
+            "text": "string"
+          },
+          "endDate": {
+            "month": "string",
+            "year": "integer",
+            "text": "string"
+          },
+          "employmentType": "string"
+        }
+      ],
+      "education": [
+        {
+          "title": "string",
+          "link": "string",
+          "degree": "string",
+          "startDate": {
+            "month": "string",
+            "year": "integer",
+            "text": "string"
+          },
+          "endDate": {
+            "month": "string",
+            "year": "integer",
+            "text": "string"
+          }
+        }
+      ],
+      "certifications": [
+        {
+          "title": "string",
+          "issuedAt": "string",
+          "issuedBy": "string",
+          "issuedByLink": "string"
+        }
+      ],
+      "receivedRecommendations": [
+        {
+          "givenBy": "string",
+          "givenAt": "string",
+          "givenByLink": "string",
+          "description": "string"
+        }
+      ],
+      "skills": [
+        {
+          "name": "string"
+        }
+      ],
+      "languages": [
+        {
+          "language": "string",
+          "proficiency": "string"
+        }
+      ],
+      "projects": [
+        {
+          "title": "string",
+          "description": "string",
+          "startDate": {
+            "month": "string",
+            "year": "integer",
+            "text": "string"
+          },
+          "endDate": {
+            "month": "string",
+            "year": "integer",
+            "text": "string"
+          }
+        }
+      ],
+      "publications": [
+        {
+          "title": "string",
+          "publishedAt": "string",
+          "description": "string",
+          "link": "string"
+        }
+      ],
+      "featured": {
+        "images": [
+          "string"
+        ],
         "link": "string",
-        "degree": "string",
-        "startDate": {"month": "string", "year": "integer", "text": "string"},
-        "endDate": {"month": "string", "year": "integer", "text": "string"}
-      }],
-      "certifications": [{"title": "string", "issuedAt": "string", "issuedBy": "string", "issuedByLink": "string"}],
-      "receivedRecommendations": [{"givenBy": "string", "givenAt": "string", "givenByLink": "string", "description": "string"}],
-      "skills": [{"name": "string"}],
-      "languages": [{"language": "string", "proficiency": "string"}],
-      "projects": [{
         "title": "string",
-        "description": "string",
-        "startDate": {"month": "string", "year": "integer", "text": "string"},
-        "endDate": {"month": "string", "year": "integer", "text": "string"}
-      }],
-      "publications": [{"title": "string", "publishedAt": "string", "description": "string", "link": "string"}],
-      "featured": {"images": ["string"], "link": "string", "title": "string", "subtitle": "string"},
+        "subtitle": "string"
+      },
       "verified": "boolean"
     },
-    "status": "string",
-    "error": "string",
-    "query": {"url": "string", "publicIdentifier": "string", "profileId": "string"},
-    "cost": {"amount": "string", "currency": "string"}
+    "cost": {
+      "amount": "string",
+      "currency": "string"
+    }
   },
-  "error_schema": {"error": "integer", "message": "string"},
+  "error_schema": {
+    "error": "integer",
+    "message": "string"
+  },
   "notes": "At least one of (url, publicIdentifier, profileId) is required. findEmail with SMTP verification incurs higher credit cost. main=true returns a cheaper, abbreviated profile."
 }

@@ -2,78 +2,280 @@
   "resource": "leads",
   "action": "search",
   "method": "GET",
-  "upstream_path": "/linkedin/lead-search",
   "como_path": "/v1/ghost/lead-search",
   "summary": "Search professional profiles by filters with advanced inclusion and exclusion criteria.",
   "query_params": [
-    {"name": "search", "type": "string", "required": false, "description": "Search query supporting fuzzy matching and search operators"},
-    {"name": "currentCompanies", "type": "string", "required": false, "description": "Filter by current company IDs or URLs (comma-separated, max 50)"},
-    {"name": "pastCompanies", "type": "string", "required": false, "description": "Filter by past company IDs or URLs (comma-separated, max 50)"},
-    {"name": "locations", "type": "string", "required": false, "description": "Filter by location text (comma-separated, max 70)"},
-    {"name": "geoIds", "type": "string", "required": false, "description": "Filter by Geo ID, overrides location parameter (comma-separated)"},
-    {"name": "schools", "type": "string", "required": false, "description": "Filter by school IDs or URLs (comma-separated, max 50)"},
-    {"name": "currentJobTitles", "type": "string", "required": false, "description": "Filter by current job titles (comma-separated, max 70)"},
-    {"name": "pastJobTitles", "type": "string", "required": false, "description": "Filter by past job titles (comma-separated, max 70)"},
-    {"name": "firstNames", "type": "string", "required": false, "description": "Filter by first names (comma-separated, max 70)"},
-    {"name": "lastNames", "type": "string", "required": false, "description": "Filter by last names (comma-separated, max 70)"},
-    {"name": "industryIds", "type": "string", "required": false, "description": "Filter by industry IDs (comma-separated, max 70)"},
-    {"name": "yearsAtCurrentCompanyIds", "type": "string", "required": false, "description": "Filter by years at current company (comma-separated)"},
-    {"name": "yearsOfExperienceIds", "type": "string", "required": false, "description": "Filter by total years of experience (comma-separated)"},
-    {"name": "seniorityLevelIds", "type": "string", "required": false, "description": "Filter by seniority level IDs (comma-separated)"},
-    {"name": "functionIds", "type": "string", "required": false, "description": "Filter by job function IDs (comma-separated)"},
-    {"name": "recentlyChangedJobs", "type": "boolean", "required": false, "description": "Filter profiles with job changes in last 90 days"},
-    {"name": "postedOnLinkedin", "type": "boolean", "required": false, "description": "Filter profiles with activity in last 30 days"},
-    {"name": "profileLanguages", "type": "string", "required": false, "description": "Filter by profile languages (comma-separated)"},
-    {"name": "companyHeadcount", "type": "string", "required": false, "description": "Filter by company headcount range (comma-separated)"},
-    {"name": "companyHeadquarterLocations", "type": "string", "required": false, "description": "Filter by company HQ location (comma-separated, max 70)"},
-    {"name": "excludeLocations", "type": "string", "required": false, "description": "Exclude locations (comma-separated, max 70)"},
-    {"name": "excludeGeoIds", "type": "string", "required": false, "description": "Exclude geo IDs (comma-separated, max 70)"},
-    {"name": "excludeCurrentCompanies", "type": "string", "required": false, "description": "Exclude current companies (comma-separated, max 50)"},
-    {"name": "excludePastCompanies", "type": "string", "required": false, "description": "Exclude past companies (comma-separated, max 50)"},
-    {"name": "excludeSchools", "type": "string", "required": false, "description": "Exclude schools (comma-separated, max 50)"},
-    {"name": "excludeCurrentJobTitles", "type": "string", "required": false, "description": "Exclude current job titles (comma-separated, max 70)"},
-    {"name": "excludePastJobTitles", "type": "string", "required": false, "description": "Exclude past job titles (comma-separated, max 70)"},
-    {"name": "excludeIndustryIds", "type": "string", "required": false, "description": "Exclude industry IDs (comma-separated, max 70)"},
-    {"name": "excludeSeniorityLevelIds", "type": "string", "required": false, "description": "Exclude seniority levels (comma-separated, max 20)"},
-    {"name": "excludeFunctionIds", "type": "string", "required": false, "description": "Exclude job functions (comma-separated, max 30)"},
-    {"name": "excludeCompanyHeadquarterLocations", "type": "string", "required": false, "description": "Exclude company HQ locations (comma-separated, max 70)"},
-    {"name": "salesNavUrl", "type": "string", "required": false, "description": "Parse and use search URL; overrides other parameters except page"},
-    {"name": "page", "type": "integer", "required": false, "description": "Page number for pagination (clamped at 100, default 1)"},
-    {"name": "sessionId", "type": "string", "required": false, "description": "Session ID to route requests through same resource"},
-    {"name": "usePrivatePool", "type": "string", "required": false, "description": "Use private resource pool if available"},
-    {"name": "requiredAccountId", "type": "string", "required": false, "description": "Specify which account to use from private pool"}
+    {
+      "name": "search",
+      "type": "string",
+      "required": false,
+      "description": "Search query supporting fuzzy matching and search operators"
+    },
+    {
+      "name": "currentCompanies",
+      "type": "string",
+      "required": false,
+      "description": "Filter by current company IDs or URLs (comma-separated, max 50)"
+    },
+    {
+      "name": "pastCompanies",
+      "type": "string",
+      "required": false,
+      "description": "Filter by past company IDs or URLs (comma-separated, max 50)"
+    },
+    {
+      "name": "locations",
+      "type": "string",
+      "required": false,
+      "description": "Filter by location text (comma-separated, max 70)"
+    },
+    {
+      "name": "geoIds",
+      "type": "string",
+      "required": false,
+      "description": "Filter by Geo ID, overrides location parameter (comma-separated)"
+    },
+    {
+      "name": "schools",
+      "type": "string",
+      "required": false,
+      "description": "Filter by school IDs or URLs (comma-separated, max 50)"
+    },
+    {
+      "name": "currentJobTitles",
+      "type": "string",
+      "required": false,
+      "description": "Filter by current job titles (comma-separated, max 70)"
+    },
+    {
+      "name": "pastJobTitles",
+      "type": "string",
+      "required": false,
+      "description": "Filter by past job titles (comma-separated, max 70)"
+    },
+    {
+      "name": "firstNames",
+      "type": "string",
+      "required": false,
+      "description": "Filter by first names (comma-separated, max 70)"
+    },
+    {
+      "name": "lastNames",
+      "type": "string",
+      "required": false,
+      "description": "Filter by last names (comma-separated, max 70)"
+    },
+    {
+      "name": "industryIds",
+      "type": "string",
+      "required": false,
+      "description": "Filter by industry IDs (comma-separated, max 70)"
+    },
+    {
+      "name": "yearsAtCurrentCompanyIds",
+      "type": "string",
+      "required": false,
+      "description": "Filter by years at current company (comma-separated)"
+    },
+    {
+      "name": "yearsOfExperienceIds",
+      "type": "string",
+      "required": false,
+      "description": "Filter by total years of experience (comma-separated)"
+    },
+    {
+      "name": "seniorityLevelIds",
+      "type": "string",
+      "required": false,
+      "description": "Filter by seniority level IDs (comma-separated)"
+    },
+    {
+      "name": "functionIds",
+      "type": "string",
+      "required": false,
+      "description": "Filter by job function IDs (comma-separated)"
+    },
+    {
+      "name": "recentlyChangedJobs",
+      "type": "boolean",
+      "required": false,
+      "description": "Filter profiles with job changes in last 90 days"
+    },
+    {
+      "name": "postedOnLinkedin",
+      "type": "boolean",
+      "required": false,
+      "description": "Filter profiles with activity in last 30 days"
+    },
+    {
+      "name": "profileLanguages",
+      "type": "string",
+      "required": false,
+      "description": "Filter by profile languages (comma-separated)"
+    },
+    {
+      "name": "companyHeadcount",
+      "type": "string",
+      "required": false,
+      "description": "Filter by company headcount range (comma-separated)"
+    },
+    {
+      "name": "companyHeadquarterLocations",
+      "type": "string",
+      "required": false,
+      "description": "Filter by company HQ location (comma-separated, max 70)"
+    },
+    {
+      "name": "excludeLocations",
+      "type": "string",
+      "required": false,
+      "description": "Exclude locations (comma-separated, max 70)"
+    },
+    {
+      "name": "excludeGeoIds",
+      "type": "string",
+      "required": false,
+      "description": "Exclude geo IDs (comma-separated, max 70)"
+    },
+    {
+      "name": "excludeCurrentCompanies",
+      "type": "string",
+      "required": false,
+      "description": "Exclude current companies (comma-separated, max 50)"
+    },
+    {
+      "name": "excludePastCompanies",
+      "type": "string",
+      "required": false,
+      "description": "Exclude past companies (comma-separated, max 50)"
+    },
+    {
+      "name": "excludeSchools",
+      "type": "string",
+      "required": false,
+      "description": "Exclude schools (comma-separated, max 50)"
+    },
+    {
+      "name": "excludeCurrentJobTitles",
+      "type": "string",
+      "required": false,
+      "description": "Exclude current job titles (comma-separated, max 70)"
+    },
+    {
+      "name": "excludePastJobTitles",
+      "type": "string",
+      "required": false,
+      "description": "Exclude past job titles (comma-separated, max 70)"
+    },
+    {
+      "name": "excludeIndustryIds",
+      "type": "string",
+      "required": false,
+      "description": "Exclude industry IDs (comma-separated, max 70)"
+    },
+    {
+      "name": "excludeSeniorityLevelIds",
+      "type": "string",
+      "required": false,
+      "description": "Exclude seniority levels (comma-separated, max 20)"
+    },
+    {
+      "name": "excludeFunctionIds",
+      "type": "string",
+      "required": false,
+      "description": "Exclude job functions (comma-separated, max 30)"
+    },
+    {
+      "name": "excludeCompanyHeadquarterLocations",
+      "type": "string",
+      "required": false,
+      "description": "Exclude company HQ locations (comma-separated, max 70)"
+    },
+    {
+      "name": "salesNavUrl",
+      "type": "string",
+      "required": false,
+      "description": "Parse and use search URL; overrides other parameters except page"
+    },
+    {
+      "name": "page",
+      "type": "integer",
+      "required": false,
+      "description": "Page number for pagination (clamped at 100, default 1)"
+    },
+    {
+      "name": "sessionId",
+      "type": "string",
+      "required": false,
+      "description": "Session ID to route requests through same resource"
+    },
+    {
+      "name": "usePrivatePool",
+      "type": "string",
+      "required": false,
+      "description": "Use private resource pool if available"
+    },
+    {
+      "name": "requiredAccountId",
+      "type": "string",
+      "required": false,
+      "description": "Specify which account to use from private pool"
+    }
   ],
   "headers": [],
   "request_body": null,
   "response_schema": {
-    "elements": [{
-      "id": "string",
-      "linkedinUrl": "string",
-      "firstName": "string",
-      "lastName": "string",
-      "openProfile": "boolean",
-      "premium": "boolean",
-      "location": {"linkedinText": "string"},
-      "pictureUrl": "string",
-      "currentPositions": [{
-        "companyName": "string",
-        "title": "string",
-        "description": "string",
-        "startedOn": {"month": "string|null", "year": "integer"},
-        "companyId": "string",
-        "companyLinkedinUrl": "string",
-        "tenureAtPosition": {"numYears": "integer", "numMonths": "integer"},
-        "tenureAtCompany": {"numYears": "integer", "numMonths": "integer"}
-      }]
-    }],
+    "elements": [
+      {
+        "id": "string",
+        "linkedinUrl": "string",
+        "firstName": "string",
+        "lastName": "string",
+        "openProfile": "boolean",
+        "premium": "boolean",
+        "location": {
+          "linkedinText": "string"
+        },
+        "pictureUrl": "string",
+        "currentPositions": [
+          {
+            "companyName": "string",
+            "title": "string",
+            "description": "string",
+            "startedOn": {
+              "month": "string|null",
+              "year": "integer"
+            },
+            "companyId": "string",
+            "companyLinkedinUrl": "string",
+            "tenureAtPosition": {
+              "numYears": "integer",
+              "numMonths": "integer"
+            },
+            "tenureAtCompany": {
+              "numYears": "integer",
+              "numMonths": "integer"
+            }
+          }
+        ]
+      }
+    ],
     "pagination": {
-      "totalPages": "integer", "totalElements": "integer", "pageNumber": "integer",
-      "previousElements": "integer", "pageSize": "integer", "paginationToken": "string|null"
+      "totalPages": "integer",
+      "totalElements": "integer",
+      "pageNumber": "integer",
+      "previousElements": "integer",
+      "pageSize": "integer",
+      "paginationToken": "string|null"
     },
-    "status": "string",
-    "error": "string",
-    "cost": {"amount": "string", "currency": "string"}
+    "cost": {
+      "amount": "string",
+      "currency": "string"
+    }
   },
-  "error_schema": {"error": "integer", "message": "string"},
+  "error_schema": {
+    "error": "integer",
+    "message": "string"
+  },
   "notes": "page parameter clamped at max 100. sessionId routes requests through same resource (slower). salesNavUrl overrides all other params except page and sessionId. Most filters accept comma-separated values with specified maximums."
 }

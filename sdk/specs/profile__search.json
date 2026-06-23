@@ -2,38 +2,111 @@
   "resource": "profile",
   "action": "search",
   "method": "GET",
-  "upstream_path": "/linkedin/profile-search",
   "como_path": "/v1/ghost/profile-search",
   "summary": "Search profiles by name, company, location, and other professional attributes.",
   "query_params": [
-    {"name": "search", "type": "string", "required": false, "description": "Search profiles by name (fuzzy matching)"},
-    {"name": "currentCompany", "type": "string", "required": false, "description": "Filter by company ID or URL; supports multiple comma-separated values"},
-    {"name": "pastCompany", "type": "string", "required": false, "description": "Filter by past company ID or URL; supports multiple comma-separated values"},
-    {"name": "school", "type": "string", "required": false, "description": "Filter by school ID or URL; supports multiple comma-separated values"},
-    {"name": "firstName", "type": "string", "required": false, "description": "Filter by first name"},
-    {"name": "lastName", "type": "string", "required": false, "description": "Filter by last name"},
-    {"name": "title", "type": "string", "required": false, "description": "Filter by job title"},
-    {"name": "location", "type": "string", "required": false, "description": "Filter by location text"},
-    {"name": "geoId", "type": "string", "required": false, "description": "Filter by location as Geo ID; overrides location parameter"},
-    {"name": "industryId", "type": "string", "required": false, "description": "Filter by industry ID; supports multiple comma-separated values"},
-    {"name": "keywordsCompany", "type": "string", "required": false, "description": "Filter by keywords in company name"},
-    {"name": "keywordsSchool", "type": "string", "required": false, "description": "Filter by keywords in school name"},
-    {"name": "followerOf", "type": "string", "required": false, "description": "Filter profiles that follow a given profile; supports multiple comma-separated values"},
-    {"name": "page", "type": "integer", "required": false, "description": "Page number for pagination"}
+    {
+      "name": "search",
+      "type": "string",
+      "required": false,
+      "description": "Search profiles by name (fuzzy matching)"
+    },
+    {
+      "name": "currentCompany",
+      "type": "string",
+      "required": false,
+      "description": "Filter by company ID or URL; supports multiple comma-separated values"
+    },
+    {
+      "name": "pastCompany",
+      "type": "string",
+      "required": false,
+      "description": "Filter by past company ID or URL; supports multiple comma-separated values"
+    },
+    {
+      "name": "school",
+      "type": "string",
+      "required": false,
+      "description": "Filter by school ID or URL; supports multiple comma-separated values"
+    },
+    {
+      "name": "firstName",
+      "type": "string",
+      "required": false,
+      "description": "Filter by first name"
+    },
+    {
+      "name": "lastName",
+      "type": "string",
+      "required": false,
+      "description": "Filter by last name"
+    },
+    {
+      "name": "title",
+      "type": "string",
+      "required": false,
+      "description": "Filter by job title"
+    },
+    {
+      "name": "location",
+      "type": "string",
+      "required": false,
+      "description": "Filter by location text"
+    },
+    {
+      "name": "geoId",
+      "type": "string",
+      "required": false,
+      "description": "Filter by location as Geo ID; overrides location parameter"
+    },
+    {
+      "name": "industryId",
+      "type": "string",
+      "required": false,
+      "description": "Filter by industry ID; supports multiple comma-separated values"
+    },
+    {
+      "name": "keywordsCompany",
+      "type": "string",
+      "required": false,
+      "description": "Filter by keywords in company name"
+    },
+    {
+      "name": "keywordsSchool",
+      "type": "string",
+      "required": false,
+      "description": "Filter by keywords in school name"
+    },
+    {
+      "name": "followerOf",
+      "type": "string",
+      "required": false,
+      "description": "Filter profiles that follow a given profile; supports multiple comma-separated values"
+    },
+    {
+      "name": "page",
+      "type": "integer",
+      "required": false,
+      "description": "Page number for pagination"
+    }
   ],
   "headers": [],
   "request_body": null,
   "response_schema": {
-    "elements": [{
-      "id": "string",
-      "publicIdentifier": "string",
-      "name": "string",
-      "position": "string",
-      "location": {"linkedinText": "string"},
-      "linkedinUrl": "string",
-      "photo": "string",
-      "hidden": "boolean"
-    }],
+    "elements": [
+      {
+        "id": "string",
+        "publicIdentifier": "string",
+        "name": "string",
+        "position": "string",
+        "location": {
+          "linkedinText": "string"
+        },
+        "linkedinUrl": "string",
+        "photo": "string",
+        "hidden": "boolean"
+      }
+    ],
     "pagination": {
       "totalPages": "integer",
       "totalElements": "integer",
@@ -42,11 +115,14 @@
       "pageSize": "integer",
       "paginationToken": "string|null"
     },
-    "status": "string",
-    "error": "string",
-    "query": {"search": "string", "companyId": "string", "location": "string", "geoId": "string", "page": "string"},
-    "cost": {"amount": "string", "currency": "string"}
+    "cost": {
+      "amount": "string",
+      "currency": "string"
+    }
   },
-  "error_schema": {"error": "integer", "message": "string"},
+  "error_schema": {
+    "error": "integer",
+    "message": "string"
+  },
   "notes": "Location text search may return unexpected results; use geo search endpoint for precise IDs. Pagination via page and paginationToken."
 }
