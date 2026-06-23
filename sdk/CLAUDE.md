@@ -120,7 +120,7 @@ param translation). See `tests/test_resources.py`.
 - **Python: snake_case. Wire: camelCase.** Pydantic alias generator handles
   models; `clean_params` dict keys must already be camelCase (translate at
   that boundary).
-- **Optional everywhere.** Upstream payloads are sparse. `extra="allow"`
+- **Optional everywhere.** Payloads are sparse. `extra="allow"`
   keeps unknown fields accessible.
 - **Bools on the wire are strings.** `clean_params` casts `True` → `"true"`.
 - **Lists are CSV strings on the wire.** `clean_params` handles `list[str]`.
@@ -155,7 +155,7 @@ safe and idiomatic.
 ## Don't
 
 - Commit or push without explicit user approval.
-- Reference the upstream provider name. Anywhere.
+- Reference any data source, infrastructure, or costs not part of the public `como` API.
 - Hand-build query strings — always `clean_params`.
 - "Fix" the special shapes (`ads.get`, `geo.search`).
 - Add `pagination_token` to a method that doesn't need it.

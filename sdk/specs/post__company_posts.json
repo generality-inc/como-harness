@@ -3,7 +3,7 @@
   "action": "company_posts",
   "method": "GET",
   "como_path": "/v1/ghost/company-posts",
-  "summary": "Retrieve posts authored by a company (alias under post resource; same upstream as company__posts).",
+  "summary": "Retrieve posts authored by a company (alias under post resource; same data as company__posts).",
   "query_params": [
     {
       "name": "company",
@@ -30,7 +30,7 @@
       "description": "Client-side filter by posted date: '24h', 'week', 'month'"
     },
     {
-      "name": "scrapePostedLimit",
+      "name": "historyLimit",
       "type": "string",
       "required": false,
       "description": "Server-side post-filter by date: '1h', '24h', 'week', 'month', '3months', '6months', 'year'"
@@ -158,5 +158,5 @@
     "error": "integer",
     "message": "string"
   },
-  "notes": "Same upstream endpoint as company__posts. Documented under both company and post sections; SDK can route either alias to the same client method. Requires one of: company URL, companyId, or companyUniversalName."
+  "notes": "Same underlying data as company__posts. Documented under both company and post sections; SDK can route either alias to the same client method. Requires one of: company URL, companyId, or companyUniversalName."
 }

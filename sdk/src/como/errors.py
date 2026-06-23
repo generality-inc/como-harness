@@ -45,7 +45,7 @@ class ComoRateLimitError(ComoAPIError):
 
 
 class ComoServerError(ComoAPIError):
-    """HTTP 5xx — upstream server error."""
+    """HTTP 5xx — server error."""
 
 
 _STATUS_MAP: dict[int, type[ComoAPIError]] = {

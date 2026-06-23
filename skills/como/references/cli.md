@@ -234,7 +234,7 @@ como linkedin profile get --url <profileUrl> --find-email
 ## Errors
 
 Non-zero exit on HTTP errors; the message is on stderr. Status codes: `400` bad request,
-`401`/`403` auth, `404` not found, `429` rate limit (back off), `5xx` upstream/server.
+`401`/`403` auth, `404` not found, `429` rate limit (back off), `5xx` server.
 
 ---
 

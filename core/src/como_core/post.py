@@ -12,8 +12,8 @@ class PostAuthor(BaseModel):
     universal_name: str | None = None
     name: str | None = None
     linkedin_url: str | None = None
-    type: Any | None = None
-    info: Any | None = None
+    type: str | None = None
+    info: str | None = None
     website: Any | None = None
     website_label: Any | None = None
     avatar: MediaImage | None = None

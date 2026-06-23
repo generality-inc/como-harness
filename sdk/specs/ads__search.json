@@ -9,7 +9,7 @@
       "name": "searchUrl",
       "type": "string",
       "required": false,
-      "description": "Complete ad library search URL to scrape"
+      "description": "Complete ad library search URL"
     },
     {
       "name": "keyword",

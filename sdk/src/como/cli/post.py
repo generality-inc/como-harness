@@ -31,8 +31,8 @@ def search_posts(
     posted_limit: str | None = typer.Option(
         None, "--posted-limit", help="Only posts within this window: 24h | week | month."
     ),
-    scrape_posted_limit: str | None = typer.Option(
-        None, "--scrape-posted-limit", help="Stop fetching once posts are older than this window."
+    history_limit: str | None = typer.Option(
+        None, "--history-limit", help="Stop fetching once posts are older than this window."
     ),
     sort_by: str | None = typer.Option(None, "--sort-by", help="date | relevance."),
     page: int | None = typer.Option(None, "--page", help="1-based page number."),
@@ -57,7 +57,7 @@ def search_posts(
             author_keywords=author_keywords,
             group=group,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             sort_by=sort_by,
             page=page,
             pagination_token=pagination_token,
@@ -86,8 +86,8 @@ def company_posts(
     posted_limit: str | None = typer.Option(
         None, "--posted-limit", help="Only posts within this window: 24h | week | month."
     ),
-    scrape_posted_limit: str | None = typer.Option(
-        None, "--scrape-posted-limit", help="Stop fetching once posts are older than this window."
+    history_limit: str | None = typer.Option(
+        None, "--history-limit", help="Stop fetching once posts are older than this window."
     ),
     page: int | None = typer.Option(None, "--page", help="1-based page number."),
     pagination_token: str | None = typer.Option(
@@ -103,7 +103,7 @@ def company_posts(
             company_id=company_id,
             company_universal_name=company_universal_name,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             page=page,
             pagination_token=pagination_token,
         )
@@ -120,8 +120,8 @@ def user_posts(
     posted_limit: str | None = typer.Option(
         None, "--posted-limit", help="Only posts within this window: 24h | week | month."
     ),
-    scrape_posted_limit: str | None = typer.Option(
-        None, "--scrape-posted-limit", help="Stop fetching once posts are older than this window."
+    history_limit: str | None = typer.Option(
+        None, "--history-limit", help="Stop fetching once posts are older than this window."
     ),
     page: int | None = typer.Option(None, "--page", help="1-based page number."),
     pagination_token: str | None = typer.Option(
@@ -137,7 +137,7 @@ def user_posts(
             profile_id=profile_id,
             profile_public_identifier=profile_public_identifier,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             page=page,
             pagination_token=pagination_token,
         )

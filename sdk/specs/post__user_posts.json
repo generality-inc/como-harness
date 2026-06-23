@@ -3,7 +3,7 @@
   "action": "user_posts",
   "method": "GET",
   "como_path": "/v1/ghost/profile-posts",
-  "summary": "Retrieve posts authored by a user/profile (alias under post resource; same upstream as profile__posts).",
+  "summary": "Retrieve posts authored by a user/profile (alias under post resource; same data as profile__posts).",
   "query_params": [
     {
       "name": "profile",
@@ -30,7 +30,7 @@
       "description": "Filter posts by max posted date: '24h', 'week', 'month'"
     },
     {
-      "name": "scrapePostedLimit",
+      "name": "historyLimit",
       "type": "string",
       "required": false,
       "description": "Post-filter by date: '1h', '24h', 'week', 'month', '3months', '6months', 'year'"
@@ -158,5 +158,5 @@
     "error": "integer",
     "message": "string"
   },
-  "notes": "Same upstream endpoint as profile__posts. Documented under both profile and post sections. Requires one of: profile, profileId, or profilePublicIdentifier."
+  "notes": "Same underlying data as profile__posts. Documented under both profile and post sections. Requires one of: profile, profileId, or profilePublicIdentifier."
 }

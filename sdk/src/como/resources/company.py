@@ -36,7 +36,7 @@ def _search_params(**kwargs) -> dict[str, str]:
 
 
 def _posts_params(
-    *, company, company_id, company_universal_name, posted_limit, scrape_posted_limit, page, pagination_token
+    *, company, company_id, company_universal_name, posted_limit, history_limit, page, pagination_token
 ) -> dict[str, str]:
     require_one_of(company=company, company_id=company_id, company_universal_name=company_universal_name)
     return clean_params(
@@ -45,7 +45,7 @@ def _posts_params(
             "companyId": company_id,
             "companyUniversalName": company_universal_name,
             "postedLimit": posted_limit,
-            "scrapePostedLimit": scrape_posted_limit,
+            "historyLimit": history_limit,
             "page": page,
             "paginationToken": pagination_token,
         }
@@ -92,7 +92,7 @@ class CompanyResource(SyncResource):
         company_id: str | None = None,
         company_universal_name: str | None = None,
         posted_limit: str | None = None,
-        scrape_posted_limit: str | None = None,
+        history_limit: str | None = None,
         page: int | None = None,
         pagination_token: str | None = None,
     ) -> PostsResult:
@@ -101,7 +101,7 @@ class CompanyResource(SyncResource):
             company_id=company_id,
             company_universal_name=company_universal_name,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             page=page,
             pagination_token=pagination_token,
         )
@@ -149,7 +149,7 @@ class AsyncCompanyResource(AsyncResource):
         company_id: str | None = None,
         company_universal_name: str | None = None,
         posted_limit: str | None = None,
-        scrape_posted_limit: str | None = None,
+        history_limit: str | None = None,
         page: int | None = None,
         pagination_token: str | None = None,
     ) -> PostsResult:
@@ -158,7 +158,7 @@ class AsyncCompanyResource(AsyncResource):
             company_id=company_id,
             company_universal_name=company_universal_name,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             page=page,
             pagination_token=pagination_token,
         )

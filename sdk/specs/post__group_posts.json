@@ -84,7 +84,7 @@
       "description": "Server-side filter by max posted date: 24h, week, month"
     },
     {
-      "name": "scrapePostedLimit",
+      "name": "historyLimit",
       "type": "string",
       "required": false,
       "description": "Client-side filter: 1h, 24h, week, month, 3months, 6months, year"
@@ -218,5 +218,5 @@
     "error": "integer",
     "message": "string"
   },
-  "notes": "Documented as 'group-posts' in upstream docs; in practice this is post-search filtered by group parameter. Same upstream endpoint as post__search."
+  "notes": "In practice this is post-search filtered by group parameter. Same underlying data as post__search."
 }

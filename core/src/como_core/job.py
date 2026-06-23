@@ -10,8 +10,8 @@ class _JobCompany(BaseModel):
 
 
 class _JobSalary(BaseModel):
-    min: str | None = None
-    max: str | None = None
+    min: int | None = None  # numeric salary bounds; ``text`` holds the formatted range
+    max: int | None = None
     currency: str | None = None
     text: str | None = None
 

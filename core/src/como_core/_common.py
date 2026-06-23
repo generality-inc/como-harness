@@ -8,31 +8,17 @@ from pydantic.alias_generators import to_camel
 
 
 class BaseModel(_PydanticBase):
-    """Base for the LinkedIn **ghost** models (camelCase wire format) — NOT the CRM
-    models, which use ``crm.CrmBaseModel``.
+    """Base for the LinkedIn data models — snake_case fields ↔ camelCase wire format.
 
-    These validate *scraped* upstream data, whose field shapes drift without notice.
-    ``coerce_numbers_to_str`` absorbs the single most common drift — a string field
-    arriving as a number (e.g. a salary ``"342000"`` returned as ``342000``) — so it
-    no longer fails validation and 502s the whole record. Drifts this can't absorb
-    (a scalar arriving as a list, an object as an array) are caught one level up by
-    ``GhostService._shape``, which drops just the offending field.
-
-    ``extra="ignore"`` is a brand-safety boundary, not a style choice: the upstream
-    wraps every entity in (and nests) a vendor envelope (``requestId``/``user``/
-    ``payments``/``cost``/…). ``ignore`` drops every undeclared key at EVERY depth
-    during validation, so vendor metadata can never bind to (and then be dumped from)
-    a nested model. ``GhostService._shape`` strips/guards the rest (declared
-    ``Any``/``dict`` passthrough fields). Do NOT change to ``allow``.
-
-    Scoped to the ghost base on purpose: first-party CRM data has controlled shapes
-    and must keep failing loudly, so it does NOT inherit this leniency."""
+    ``extra="ignore"`` drops any undeclared key at every depth during validation, so a
+    response only ever contains the fields declared here. (The CRM models use a
+    separate base, ``crm.CrmBaseModel``; they are not affected by this and keep
+    failing loudly on unexpected shapes.)"""
 
     model_config = ConfigDict(
         alias_generator=to_camel,
         populate_by_name=True,
         extra="ignore",
-        coerce_numbers_to_str=True,
     )
 
 
@@ -46,13 +32,10 @@ class Pagination(BaseModel):
 
 
 class Cost(BaseModel):
-    """What the caller is charged for one request — OUR price, margin included.
+    """The price for one request, in USD.
 
-    This is the marked-up amount billed to the customer's wallet, never the
-    upstream/vendor cost: the API computes it from the per-org price book and
-    stamps it onto the response after the upstream envelope is stripped. ``amount``
-    is a fixed-point USD string (6 dp, e.g. ``"0.060000"``) so it round-trips the
-    ledger's ``Decimal`` exactly without float drift.
+    ``amount`` is a fixed-point string (6 dp, e.g. ``"0.060000"``) so it round-trips
+    exactly without floating-point error.
     """
 
     amount: str
@@ -60,12 +43,9 @@ class Cost(BaseModel):
 
 
 class CostMixin(BaseModel):
-    """Mixin for top-level ghost responses that carry a request ``cost``.
+    """Mixin for responses that carry a request ``cost`` (the price for the call).
 
-    Optional by design: ``cost`` is absent when the request wasn't metered (no
-    upstream cost, or the billing layer couldn't resolve the org). It is the only
-    pricing field a customer ever sees — see ``GhostService._shape``, which strips
-    every upstream pricing/identity field before this is added.
+    Optional: ``cost`` is absent when a request wasn't priced.
     """
 
     cost: Cost | None = None

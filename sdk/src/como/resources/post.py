@@ -39,7 +39,7 @@ def _search_params(**kwargs) -> dict[str, str]:
             "authorKeywords": kwargs.get("author_keywords"),
             "group": kwargs.get("group"),
             "postedLimit": kwargs.get("posted_limit"),
-            "scrapePostedLimit": kwargs.get("scrape_posted_limit"),
+            "historyLimit": kwargs.get("history_limit"),
             "sortBy": kwargs.get("sort_by"),
             "page": kwargs.get("page"),
             "paginationToken": kwargs.get("pagination_token"),
@@ -54,7 +54,7 @@ def _get_params(*, url) -> dict[str, str]:
 
 
 def _company_posts_params(
-    *, company, company_id, company_universal_name, posted_limit, scrape_posted_limit, page, pagination_token
+    *, company, company_id, company_universal_name, posted_limit, history_limit, page, pagination_token
 ) -> dict[str, str]:
     require_one_of(company=company, company_id=company_id, company_universal_name=company_universal_name)
     return clean_params(
@@ -63,7 +63,7 @@ def _company_posts_params(
             "companyId": company_id,
             "companyUniversalName": company_universal_name,
             "postedLimit": posted_limit,
-            "scrapePostedLimit": scrape_posted_limit,
+            "historyLimit": history_limit,
             "page": page,
             "paginationToken": pagination_token,
         }
@@ -71,7 +71,7 @@ def _company_posts_params(
 
 
 def _user_posts_params(
-    *, profile, profile_id, profile_public_identifier, posted_limit, scrape_posted_limit, page, pagination_token
+    *, profile, profile_id, profile_public_identifier, posted_limit, history_limit, page, pagination_token
 ) -> dict[str, str]:
     require_one_of(profile=profile, profile_id=profile_id, profile_public_identifier=profile_public_identifier)
     return clean_params(
@@ -80,7 +80,7 @@ def _user_posts_params(
             "profileId": profile_id,
             "profilePublicIdentifier": profile_public_identifier,
             "postedLimit": posted_limit,
-            "scrapePostedLimit": scrape_posted_limit,
+            "historyLimit": history_limit,
             "page": page,
             "paginationToken": pagination_token,
         }
@@ -141,7 +141,7 @@ class PostResource(SyncResource):
         author_keywords: str | None = None,
         group: str | None = None,
         posted_limit: str | None = None,
-        scrape_posted_limit: str | None = None,
+        history_limit: str | None = None,
         sort_by: str | None = None,
         page: int | None = None,
         pagination_token: str | None = None,
@@ -160,7 +160,7 @@ class PostResource(SyncResource):
             author_keywords=author_keywords,
             group=group,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             sort_by=sort_by,
             page=page,
             pagination_token=pagination_token,
@@ -180,7 +180,7 @@ class PostResource(SyncResource):
         company_id: str | None = None,
         company_universal_name: str | None = None,
         posted_limit: str | None = None,
-        scrape_posted_limit: str | None = None,
+        history_limit: str | None = None,
         page: int | None = None,
         pagination_token: str | None = None,
     ) -> PostsResult:
@@ -189,7 +189,7 @@ class PostResource(SyncResource):
             company_id=company_id,
             company_universal_name=company_universal_name,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             page=page,
             pagination_token=pagination_token,
         )
@@ -203,7 +203,7 @@ class PostResource(SyncResource):
         profile_id: str | None = None,
         profile_public_identifier: str | None = None,
         posted_limit: str | None = None,
-        scrape_posted_limit: str | None = None,
+        history_limit: str | None = None,
         page: int | None = None,
         pagination_token: str | None = None,
     ) -> PostsResult:
@@ -212,7 +212,7 @@ class PostResource(SyncResource):
             profile_id=profile_id,
             profile_public_identifier=profile_public_identifier,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             page=page,
             pagination_token=pagination_token,
         )
@@ -289,7 +289,7 @@ class AsyncPostResource(AsyncResource):
         author_keywords: str | None = None,
         group: str | None = None,
         posted_limit: str | None = None,
-        scrape_posted_limit: str | None = None,
+        history_limit: str | None = None,
         sort_by: str | None = None,
         page: int | None = None,
         pagination_token: str | None = None,
@@ -308,7 +308,7 @@ class AsyncPostResource(AsyncResource):
             author_keywords=author_keywords,
             group=group,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             sort_by=sort_by,
             page=page,
             pagination_token=pagination_token,
@@ -328,7 +328,7 @@ class AsyncPostResource(AsyncResource):
         company_id: str | None = None,
         company_universal_name: str | None = None,
         posted_limit: str | None = None,
-        scrape_posted_limit: str | None = None,
+        history_limit: str | None = None,
         page: int | None = None,
         pagination_token: str | None = None,
     ) -> PostsResult:
@@ -337,7 +337,7 @@ class AsyncPostResource(AsyncResource):
             company_id=company_id,
             company_universal_name=company_universal_name,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             page=page,
             pagination_token=pagination_token,
         )
@@ -351,7 +351,7 @@ class AsyncPostResource(AsyncResource):
         profile_id: str | None = None,
         profile_public_identifier: str | None = None,
         posted_limit: str | None = None,
-        scrape_posted_limit: str | None = None,
+        history_limit: str | None = None,
         page: int | None = None,
         pagination_token: str | None = None,
     ) -> PostsResult:
@@ -360,7 +360,7 @@ class AsyncPostResource(AsyncResource):
             profile_id=profile_id,
             profile_public_identifier=profile_public_identifier,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             page=page,
             pagination_token=pagination_token,
         )

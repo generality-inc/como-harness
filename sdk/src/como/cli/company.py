@@ -68,9 +68,9 @@ def company_posts(
     posted_limit: str | None = typer.Option(
         None, "--posted-limit", help="Only return posts within this window: 24h | week | month."
     ),
-    scrape_posted_limit: str | None = typer.Option(
+    history_limit: str | None = typer.Option(
         None,
-        "--scrape-posted-limit",
+        "--history-limit",
         help="Stop fetching once posts are older than this window (caps how far back to read): 24h | week | month.",
     ),
     page: int | None = typer.Option(None, "--page", help="1-based page number."),
@@ -89,7 +89,7 @@ def company_posts(
             company_id=company_id,
             company_universal_name=company_universal_name,
             posted_limit=posted_limit,
-            scrape_posted_limit=scrape_posted_limit,
+            history_limit=history_limit,
             page=page,
             pagination_token=pagination_token,
         )

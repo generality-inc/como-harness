@@ -84,7 +84,7 @@
       "description": "Server-side filter by max posted date: 24h, week, month"
     },
     {
-      "name": "scrapePostedLimit",
+      "name": "historyLimit",
       "type": "string",
       "required": false,
       "description": "Client-side filter: 1h, 24h, week, month, 3months, 6months, year"

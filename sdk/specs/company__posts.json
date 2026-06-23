@@ -30,7 +30,7 @@
       "description": "Client-side filter by posted date. Values: '24h', 'week', 'month'"
     },
     {
-      "name": "scrapePostedLimit",
+      "name": "historyLimit",
       "type": "string",
       "required": false,
       "description": "Server-side post-filter by date. Values: '1h', '24h', 'week', 'month', '3months', '6months', 'year'"
@@ -158,5 +158,5 @@
     "error": "integer",
     "message": "string"
   },
-  "notes": "Requires one of: company URL, companyId, or companyUniversalName. postedLimit is client-side and may affect pagination accuracy; scrapePostedLimit is server-side post-fetch."
+  "notes": "Requires one of: company URL, companyId, or companyUniversalName. postedLimit is client-side and may affect pagination accuracy; historyLimit is server-side post-fetch."
 }

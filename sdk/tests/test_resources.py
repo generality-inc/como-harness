@@ -387,7 +387,7 @@ def test_not_found_maps():
 
 @respx.mock
 def test_server_error_maps():
-    respx.get(f"{BASE}/v1/ghost/company").mock(return_value=httpx.Response(503, text="upstream down"))
+    respx.get(f"{BASE}/v1/ghost/company").mock(return_value=httpx.Response(503, text="service unavailable"))
     with Como() as c, pytest.raises(ComoServerError):
         c.company.get(universal_name="acme")
 

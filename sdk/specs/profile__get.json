@@ -45,7 +45,7 @@
       "name": "includeAboutProfile",
       "type": "string",
       "required": false,
-      "description": "Include to scrape the About this profile popup"
+      "description": "Include to fetch the About this profile section"
     }
   ],
   "headers": [],
